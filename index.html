@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>TrackPort — Shipment Tracking</title>
   <meta name="description" content="Read-only shipment and flight tracking.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -285,6 +285,26 @@
     .ticket-tracking-card .ticket-number{display:block;font:700 26px "IBM Plex Mono",monospace;color:var(--ink);letter-spacing:.01em}
     @media(max-width:760px){.landing-main.result-page{padding-bottom:12px;margin-top:-84px}.landing-main.result-page .summary{padding-left:8px;padding-right:8px}.ticket-tracking-card .ticket-number{font-size:21px}}
     @media(max-width:480px){.landing-main.result-page{margin-top:-72px}}
+
+    /* Pin header in place while scrolling, and clear the phone status bar */
+    .topbar{position:sticky;top:0;z-index:60;height:auto;min-height:64px;box-sizing:border-box;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:14px}
+
+    /* Product/shipment tracking result page — left-aligned info card */
+    #app .product-summary-top{justify-content:flex-start;text-align:left}
+    #app .product-summary-top>.product-summary-info{display:flex;flex-direction:column;align-items:flex-start;text-align:left}
+    .product-summary-info h2{font-style:italic}
+    .product-badge-row{margin-top:8px}
+    .carrier-chip{display:inline-flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;font-weight:600;color:var(--ink)}
+    .carrier-avatar{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font:700 10px "IBM Plex Mono",monospace;color:#1a1a1a;flex:0 0 auto}
+    #app .product-summary-grid{text-align:left}
+    #app .product-result .section-title{justify-content:space-between;align-items:flex-start;text-align:left;flex-wrap:wrap;gap:10px}
+    #app .product-result .section-title h3,#app .product-result .section-title span{width:auto;text-align:left}
+    .section-title-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+    .section-title-side>span{color:var(--muted);font-size:12px}
+    .map-open-btn{background:rgba(255,255,255,.06);border:1px solid var(--glass-border);border-radius:999px;padding:8px 14px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:border-color .25s ease,background .25s ease}
+    .map-open-btn:hover{border-color:rgba(212,175,90,.5);background:rgba(212,175,90,.1)}
+    .map-open-btn svg{width:12px;height:12px}
+    #app .product-result .tracking-map-note{justify-content:space-between;text-align:left}
   </style>
 </head>
 <body>
@@ -379,13 +399,23 @@
       const latitude = Number(source.latitude), longitude = Number(source.longitude);
       return Number.isFinite(latitude) && Number.isFinite(longitude) ? {latitude,longitude,label:events[0]?.location || 'Latest reported location',timestamp:events[0]?.timestamp || record.updatedAt} : null;
     }
+    function carrierInitials(name){
+      const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if(!parts.length) return '—';
+      return (parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0].slice(0,2)).toUpperCase();
+    }
+    function carrierColor(name){
+      const map = {fedex:'#4D148C',ups:'#8D6E52',dhl:'#FFCC00',usps:'#4472C4',maersk:'#00243D','emirates skycargo':'#D71920',dpd:'#DC0032','amazon logistics':'#FF9900','amazon shipping':'#FF9900'};
+      return map[String(name || '').trim().toLowerCase()] || 'var(--primary)';
+    }
     function mapCard(record, type, title, subtitle){
       const stops = routeStops(record,type), location = currentLocation(record,type);
       const selected = (record.events || []).slice().sort((a,b)=>new Date(b.timestamp || 0)-new Date(a.timestamp || 0))[0]?.routeStopId || stops[0]?.id;
       const mapStops = stops.filter(stop=>Number.isFinite(Number(stop.latitude)) && Number.isFinite(Number(stop.longitude))).map(stop=>({...stop,latitude:Number(stop.latitude),longitude:Number(stop.longitude)}));
       if(location && !mapStops.some(stop=>stop.latitude === location.latitude && stop.longitude === location.longitude)) mapStops.push({id:'current',name:location.label,kind:'Current location',latitude:location.latitude,longitude:location.longitude});
       const rows = stops.map((stop,index)=>`<div class="route-row ${stop.id === selected ? 'current' : ''}"><span class="route-marker">${stop.id === selected ? '●' : index + 1}</span><span><span class="route-name">${esc(stop.name || 'Route location')}</span><span class="route-kind">${index === 0 ? 'Origin' : index === stops.length - 1 ? 'Destination' : 'Stopover'} · ${esc(stop.kind || 'Location')}</span></span></div>`).join('');
-      return `<section class="card card-pad"><div class="section-title"><h3>${esc(title)}</h3><span>${esc(subtitle)}</span></div>${location ? `<div class="tracking-map-note"><strong>${esc(location.label)}</strong><span class="mono">Updated ${fmtDateTime(location.timestamp)}</span></div>` : ''}<div class="route-layout">${mapStops.length ? `<div class="tracking-map" data-route-map data-stops="${esc(JSON.stringify(mapStops))}" data-current-id="${esc(selected || 'current')}"></div>` : `<div class="tracking-map map-empty">Route coordinates are not available yet. Progress updates are still shown below.</div>`}<div class="route-list">${rows || '<div class="map-empty">No route stops have been published.</div>'}</div></div></section>`;
+      const mapsUrl = location ? `https://www.google.com/maps?q=${location.latitude},${location.longitude}` : (stops[0] && stops[0].name ? `https://www.google.com/maps?q=${encodeURIComponent(stops[0].name)}` : null);
+      return `<section class="card card-pad"><div class="section-title"><h3>${esc(title)}</h3><div class="section-title-side"><span>${esc(subtitle)}</span>${mapsUrl ? `<a class="btn btn-ghost map-open-btn" href="${esc(mapsUrl)}" target="_blank" rel="noopener">${icon('map')} Open in maps</a>` : ''}</div></div>${location ? `<div class="tracking-map-note"><strong>${esc(location.label)}</strong><span class="mono">Updated ${fmtDateTime(location.timestamp)}</span></div>` : ''}<div class="route-layout">${mapStops.length ? `<div class="tracking-map" data-route-map data-stops="${esc(JSON.stringify(mapStops))}" data-current-id="${esc(selected || 'current')}"></div>` : `<div class="tracking-map map-empty">Route coordinates are not available yet. Progress updates are still shown below.</div>`}<div class="route-list">${rows || '<div class="map-empty">No route stops have been published.</div>'}</div></div></section>`;
     }
     function timeline(record, type){
       const flow = type === 'shipment' ? STATUS_FLOW : FLIGHT_FLOW, status = record.status || flow[0], index = Math.max(0, flow.indexOf(status)), fill = flow.length > 1 ? (index / (flow.length - 1)) * 100 : 0;
@@ -404,7 +434,7 @@
     }
     function shipmentPage(record){
       const shipping = record.shipping || {}, sender = record.sender || {}, recipient = record.recipient || {};
-      return `<div class="landing-page">${heroSection()}<div class="landing-main result-page"><div class="summary result-summary"><section class="card summary-card"><div class="summary-top">${record.imageUrl ? `<img src="${esc(record.imageUrl)}" alt="">` : `<div class="image-fallback">${icon('package')}</div>`}<div><h2>${esc(record.productName || 'Shipment')}</h2><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">${badge(record.status)}${shipping.carrier ? `<span style="color:var(--muted);font-size:12px">${esc(shipping.carrier)}</span>` : ''}</div></div></div><div class="summary-grid"><div><div class="k">${icon('user')} Sender</div><div class="v">${esc(sender.fullName || '—')}</div></div><div><div class="k">${icon('user')} Recipient</div><div class="v">${esc(recipient.fullName || '—')}</div></div><div><div class="k">${icon('map-pin')} Origin</div><div class="v">${esc(sender.city || '—')}, ${esc(sender.country || '')}</div></div><div><div class="k">${icon('map-pin')} Destination</div><div class="v">${esc(recipient.city || '—')}, ${esc(recipient.country || '')}</div></div><div><div class="k">${icon('truck')} Method</div><div class="v">${esc(shipping.method || '—')}</div></div><div><div class="k">${icon('calendar')} Est. delivery</div><div class="v">${fmtDate(shipping.eta)}</div></div></div></section>${mapCard(record,'shipment','Live package route',`${shipping.method || 'Shipping'} · read-only`)}${timeline(record,'shipment')}${searchPanel('', record.trackingNumber, false)}</div></div></div>`;
+      return `<div class="landing-page product-page">${heroSection()}<div class="landing-main result-page product-result"><div class="summary result-summary"><div class="ticket-tracking-card"><span class="ticket-tracking-label">Tracking Number</span><span class="ticket-number">${esc(record.trackingNumber)}</span></div><section class="card summary-card product-summary-card"><div class="summary-top product-summary-top">${record.imageUrl ? `<img src="${esc(record.imageUrl)}" alt="">` : `<div class="image-fallback">${icon('package')}</div>`}<div class="product-summary-info"><h2>${esc(record.productName || 'Shipment')}</h2><div class="product-badge-row">${badge(record.status)}</div>${shipping.carrier ? `<div class="carrier-chip"><span class="carrier-avatar" style="background:${carrierColor(shipping.carrier)}">${esc(carrierInitials(shipping.carrier))}</span><span>${esc(shipping.carrier)}</span></div>` : ''}</div></div><div class="summary-grid product-summary-grid"><div><div class="k">${icon('user')} Sender</div><div class="v">${esc(sender.fullName || '—')}</div></div><div><div class="k">${icon('user')} Recipient</div><div class="v">${esc(recipient.fullName || '—')}</div></div><div><div class="k">${icon('map-pin')} Origin</div><div class="v">${esc(sender.city || '—')}, ${esc(sender.country || '')}</div></div><div><div class="k">${icon('map-pin')} Destination</div><div class="v">${esc(recipient.city || '—')}, ${esc(recipient.country || '')}</div></div><div><div class="k">${icon('truck')} Method</div><div class="v">${esc(shipping.method || '—')}</div></div><div><div class="k">${icon('calendar')} Est. delivery</div><div class="v">${fmtDate(shipping.eta)}</div></div></div></section>${mapCard(record,'shipment','Live package route',`${shipping.method || 'Shipping'} · read-only`)}${timeline(record,'shipment')}${searchPanel('', record.trackingNumber, false)}</div></div></div>`;
     }
     function airport(value){ const parts = String(value || '—').split(/\s*[·|—-]\s*/).filter(Boolean); return parts.length > 1 ? {code:parts.shift().toUpperCase(),name:parts.join(' ').toUpperCase()} : {code:String(value || '—').toUpperCase(),name:String(value || '—').toUpperCase()}; }
     function flightPage(record){
