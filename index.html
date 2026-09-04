@@ -276,13 +276,15 @@
     @media(prefers-reduced-motion:reduce){.testimonial blockquote.is-typing:after{animation:none;opacity:0}.testimonial cite{transition:none}}
 
     /* Fix: tighten space below result pages, realign destination, move tracking number to top of ticket */
-    .landing-main.result-page{padding-bottom:16px}
+    .landing-main.result-page{padding-bottom:16px;margin-top:-96px;width:100%;margin-left:0;margin-right:0}
+    .landing-main.result-page .summary{padding-left:12px;padding-right:12px}
     .search-panel.static-panel{margin:20px auto 0}
     #app .airport:last-child{text-align:center}
     .ticket-tracking-card{border:1px solid var(--glass-border);border-radius:18px;background:rgba(255,255,255,.03);padding:16px 20px;text-align:center;margin-bottom:18px}
     .ticket-tracking-card .ticket-tracking-label{display:block;color:var(--primary);font:600 11px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.18em;margin-bottom:8px}
     .ticket-tracking-card .ticket-number{display:block;font:700 26px "IBM Plex Mono",monospace;color:var(--ink);letter-spacing:.01em}
-    @media(max-width:760px){.landing-main.result-page{padding-bottom:12px}.ticket-tracking-card .ticket-number{font-size:21px}}
+    @media(max-width:760px){.landing-main.result-page{padding-bottom:12px;margin-top:-84px}.landing-main.result-page .summary{padding-left:8px;padding-right:8px}.ticket-tracking-card .ticket-number{font-size:21px}}
+    @media(max-width:480px){.landing-main.result-page{margin-top:-72px}}
   </style>
 </head>
 <body>
