@@ -772,10 +772,12 @@
 
   <script>
     /* Shared Firebase with TrackPort premium (creator app).
-       Read-only tracking companion — same project & state docs.
+       Read-only tracking companion — same project.
        Live site: https://nifemish.github.io/TrackPort-Tracking/
-       When a shipping product or flight ticket is created in TrackPort premium,
-       it is stored under nbatoolsState and becomes trackable here by number. */
+       Premium saves each shipment/flight as:
+         nbatoolsState / trackport-record-{trackingNumber}
+       with { value: JSON.stringify(record), type, trackingNumber, ... }.
+       This app reads those per-record docs (and still accepts legacy shared maps). */
     const firebaseConfig = {
       apiKey: "AIzaSyD9HUq3XpfagPsGByZMbGG_E8T43hAjKFM",
       authDomain: "nbatools-38be3.firebaseapp.com",
@@ -785,7 +787,7 @@
       appId: "1:275083219856:web:762d3127dd6370ded09915"
     };
 
-    let shipments = {}, flights = {}, listeners = [];
+    let shipments = {}, flights = {}, listeners = [], db = null, recordCache = {};
     /* Status flows aligned with the premium creator app */
     const STATUS_FLOW = ['Order Created','Shipment Confirmed','Picked Up','In Transit','Arrived at Facility','Out for Delivery','Delivered'];
     const ALL_STATUSES = [...STATUS_FLOW, 'Delivery Exception'];
@@ -821,6 +823,108 @@
       return `<span class="badge" style="background:${color.bg};color:${color.fg}">${icon(statusIcon(status))}${esc(status || 'Unknown')}</span>`;
     }
     function normalizeRecords(value){ try{ const data = JSON.parse(value || '{}'); return data && typeof data === 'object' ? data : {}; }catch(_error){ return {}; } }
+    function sanitizeDocId(number){
+      return String(number || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+    }
+    function recordDocRef(number){
+      if(!db) return null;
+      return db.collection('nbatoolsState').doc('trackport-record-' + sanitizeDocId(number));
+    }
+    /** Bridge premium (flat) shipment schema → tracking UI fields */
+    function normalizeShipmentRecord(s){
+      if(!s || typeof s !== 'object') return s;
+      const sender = s.sender || {};
+      const recipient = s.recipient || {};
+      const createdLegacy = s.created ? new Date(s.created) : null;
+      const createdAt = s.createdAt || (createdLegacy && !isNaN(createdLegacy.getTime()) ? createdLegacy.toISOString() : null);
+      s.sender = {
+        ...sender,
+        fullName: sender.fullName || sender.name || '',
+        name: sender.name || sender.fullName || '',
+        city: sender.city || s.origin || '',
+        country: sender.country || ''
+      };
+      s.recipient = {
+        ...recipient,
+        fullName: recipient.fullName || recipient.name || '',
+        name: recipient.name || recipient.fullName || '',
+        city: recipient.city || s.destination || '',
+        country: recipient.country || ''
+      };
+      s.origin = s.origin || s.sender.city || '';
+      s.destination = s.destination || s.recipient.city || '';
+      s.status = s.status || 'Order Created';
+      if(createdAt) s.createdAt = createdAt;
+      s.updatedAt = s.updatedAt || createdAt || null;
+      const sh = s.shipping || {};
+      s.shipping = {
+        ...sh,
+        carrier: sh.carrier || s.carrier || 'TrackPort Logistics',
+        method: sh.method || s.method || 'Standard',
+        packageType: sh.packageType || s.packageType || '',
+        weight: sh.weight != null ? sh.weight : (s.weight != null ? s.weight : null),
+        dimensions: sh.dimensions || s.dimensions || '',
+        fee: sh.fee != null ? sh.fee : (s.fee != null ? s.fee : null),
+        eta: sh.eta || s.eta || '',
+        initialLocation: sh.initialLocation || s.currentLocation || s.origin || '',
+        initialLocationId: sh.initialLocationId || '',
+        latitude: sh.latitude != null ? sh.latitude : (s.latitude != null ? s.latitude : null),
+        longitude: sh.longitude != null ? sh.longitude : (s.longitude != null ? s.longitude : null),
+        routeStops: sh.routeStops || s.routeStops || null
+      };
+      s.currentLocation = s.currentLocation || s.shipping.initialLocation || s.origin || '';
+      s.events = Array.isArray(s.events) ? s.events : [];
+      return s;
+    }
+    function normalizeFlightRecord(f){
+      if(!f || typeof f !== 'object') return f;
+      f.status = f.status || 'Ticket Booked';
+      f.events = Array.isArray(f.events) ? f.events : [];
+      f.origin = f.origin || f.from?.city || f.from?.name || '';
+      f.destination = f.destination || f.to?.city || f.to?.name || '';
+      return f;
+    }
+    function parseCloudRecord(data){
+      if(!data) return null;
+      let record = null;
+      if(typeof data.value === 'string'){
+        try{ record = JSON.parse(data.value); }catch(_e){ record = null; }
+      } else if(data.value && typeof data.value === 'object'){
+        record = data.value;
+      } else if(data.trackingNumber){
+        record = data;
+      }
+      if(!record || typeof record !== 'object') return null;
+      const type = (data.type || record.type || '').toLowerCase();
+      if(type === 'flight' || String(record.trackingNumber || '').toUpperCase().startsWith('FLT-')){
+        return { type: 'flight', record: normalizeFlightRecord(record) };
+      }
+      return { type: 'shipment', record: normalizeShipmentRecord(record) };
+    }
+    async function fetchRecordByNumber(code){
+      const key = String(code || '').trim().toUpperCase();
+      if(!key || !db) return null;
+      if(recordCache[key]) return recordCache[key];
+      // Prefer per-record docs written by premium TrackPort
+      try{
+        const snap = await recordDocRef(key).get();
+        if(snap.exists){
+          const parsed = parseCloudRecord(snap.data());
+          if(parsed?.record){
+            recordCache[key] = parsed;
+            if(parsed.type === 'flight') flights[key] = parsed.record;
+            else shipments[key] = parsed.record;
+            return parsed;
+          }
+        }
+      }catch(err){
+        console.warn('[TrackPort] per-record lookup failed', key, err);
+      }
+      // Legacy shared maps (if ever populated)
+      if(shipments[key]) return { type: 'shipment', record: normalizeShipmentRecord(shipments[key]) };
+      if(flights[key]) return { type: 'flight', record: normalizeFlightRecord(flights[key]) };
+      return null;
+    }
     function routeText(value){ return String(value || '').trim(); }
     function routeStops(record, type){
       const stored = type === 'shipment' ? safe(record,'shipping.routeStops',null) : record.routeStops;
@@ -946,10 +1050,26 @@
       const hash = location.hash.replace(/^#\/?track\/?/,'').split('/')[0];
       return decodeURIComponent(hash || '').trim().toUpperCase();
     }
-    function recordFor(code){ return code.startsWith('FLT-') ? {record:flights[code],type:'flight'} : {record:shipments[code],type:'shipment'}; }
-    function render(message=''){
+    function recordFor(code){
+      if(!code) return {record:null,type:null};
+      if(recordCache[code]) return recordCache[code];
+      if(code.startsWith('FLT-') && flights[code]) return {record:normalizeFlightRecord(flights[code]),type:'flight'};
+      if(shipments[code]) return {record:normalizeShipmentRecord(shipments[code]),type:'shipment'};
+      if(flights[code]) return {record:normalizeFlightRecord(flights[code]),type:'flight'};
+      return {record:null,type:null};
+    }
+    async function render(message=''){
       try{ if(typeof showPageLoader==='function') showPageLoader('Loading tracking', 350); }catch(_e){}
-      const code = trackingCode(), result = recordFor(code);
+      const code = trackingCode();
+      let result = recordFor(code);
+      if(code && !result.record){
+        try{
+          result = (await fetchRecordByNumber(code)) || {record:null,type:null};
+        }catch(err){
+          console.warn('[TrackPort] fetch failed', err);
+          result = {record:null,type:null};
+        }
+      }
       $('#app').innerHTML = code
         ? (result.record ? (result.type === 'flight' ? flightPage(result.record) : shipmentPage(result.record)) : errorPage(`We couldn't find a shipment or flight with tracking number ${code}.`))
         : searchPage(message);
@@ -1067,13 +1187,13 @@
         renderIcons();
         return;
       }
-      const db = firebase.firestore(app);
+      db = firebase.firestore(app);
+      // Legacy aggregate maps (optional — premium writes per-record docs instead)
       const attach = (key, setter) => db.collection('nbatoolsState').doc(key).onSnapshot(snapshot=>{
         setter(snapshot.exists ? normalizeRecords(snapshot.data()?.value) : {});
-        render();
+        if(trackingCode()) render();
       }, error=>{
         console.warn(`Could not read ${key}`,error);
-        if(!trackingCode()) render('The tracking service could not be reached. Please try again.');
       });
       listeners.push(attach('shared:nbatools-shipments', value=>shipments=value));
       listeners.push(attach('shared:nbatools-flights', value=>flights=value));
