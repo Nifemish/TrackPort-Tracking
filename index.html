@@ -513,7 +513,174 @@
     /* Page shell */
     .landing-page{min-height:100vh}
     .landing-main{padding-bottom:40px}
-    .result-page .summary{padding-top:24px}
+    
+    /* ===== Premium tracking result (courier / airline grade) ===== */
+    .trk-page{padding:calc(88px + env(safe-area-inset-top)) 20px 48px;max-width:1100px;margin:0 auto}
+    .trk-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+    .trk-head h1{margin:0 0 6px;font-size:clamp(26px,4vw,36px);letter-spacing:-.04em;line-height:1.1}
+    .trk-head .trk-sub{color:var(--muted);font-size:14px;margin:0;line-height:1.45}
+    .trk-actions{display:flex;flex-wrap:wrap;gap:8px}
+    .trk-status-banner{
+      display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
+      background:var(--dark);color:#fff;border-radius:24px;padding:22px 24px;margin-bottom:18px;
+      position:relative;overflow:hidden;
+    }
+    .trk-status-banner:after{
+      content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;
+      border:1px solid rgba(255,255,255,.08);box-shadow:0 0 0 40px rgba(255,255,255,.03);
+    }
+    .trk-status-banner .trk-status-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px}
+    .trk-status-banner .trk-status-name{font-size:clamp(24px,4vw,32px);font-weight:800;letter-spacing:-.04em;margin:0 0 8px}
+    .trk-status-banner .trk-status-meta{font-size:14px;color:rgba(255,255,255,.65);line-height:1.45}
+    .trk-status-banner .trk-status-meta strong{color:#c8ff4a;font-weight:700}
+    .trk-status-banner .trk-eta-box{text-align:right;position:relative;z-index:1}
+    .trk-status-banner .trk-eta-box .lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+    .trk-status-banner .trk-eta-box .val{font-size:20px;font-weight:800;letter-spacing:-.03em;margin-top:4px}
+    .trk-status-banner .trk-eta-box .sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:4px}
+    @media(max-width:640px){
+      .trk-status-banner{grid-template-columns:1fr}
+      .trk-status-banner .trk-eta-box{text-align:left;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)}
+    }
+    .trk-tn-row{
+      display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;
+      background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 18px;margin-bottom:18px;
+    }
+    .trk-tn-row .lbl{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    .trk-tn-row .num{font-size:18px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+    .trk-tn-row .trk-tn-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .trk-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:18px;margin-bottom:18px}
+    @media(max-width:900px){.trk-grid{grid-template-columns:1fr}}
+    .trk-card{
+      background:var(--surface);border:1px solid var(--line);border-radius:22px;
+      box-shadow:0 8px 28px color-mix(in srgb,var(--ink) 5%,transparent);overflow:hidden;
+    }
+    .trk-card-head{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:16px 20px;border-bottom:1px solid var(--line);
+    }
+    .trk-card-head h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.02em}
+    .trk-card-head .side{font-size:12px;color:var(--muted);font-weight:600}
+    .trk-card-body{padding:18px 20px}
+    .trk-progress{
+      display:flex;justify-content:space-between;position:relative;padding:8px 4px 4px;margin-bottom:4px;
+    }
+    .trk-progress:before{
+      content:"";position:absolute;top:18px;left:12%;right:12%;height:3px;background:var(--line);border-radius:2px;
+    }
+    .trk-progress .trk-fill{
+      position:absolute;top:18px;left:12%;height:3px;background:var(--accent);border-radius:2px;z-index:0;
+      transition:width .4s var(--ease-smooth);
+    }
+    .trk-prog-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;z-index:1;min-width:0}
+    .trk-prog-dot{
+      width:22px;height:22px;border-radius:50%;background:var(--surface2);border:2px solid var(--line);
+      display:grid;place-items:center;font-size:10px;
+    }
+    .trk-prog-step.complete .trk-prog-dot{background:var(--accent);border-color:var(--accent);color:#0a100b}
+    .trk-prog-step.active .trk-prog-dot{background:var(--ink);border-color:var(--ink);color:var(--bg);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 35%,transparent)}
+    .trk-prog-step span{font-size:10px;font-weight:700;color:var(--muted);text-align:center;line-height:1.25;max-width:72px}
+    .trk-prog-step.complete span,.trk-prog-step.active span{color:var(--ink)}
+    @media(max-width:640px){
+      .trk-prog-step span{font-size:9px;max-width:56px}
+      .trk-progress:before,.trk-progress .trk-fill{left:8%;right:8%}
+      .trk-progress .trk-fill{left:8%}
+    }
+    .trk-kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+    @media(max-width:520px){.trk-kv{grid-template-columns:1fr}}
+    .trk-kv .k{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+    .trk-kv .v{font-size:14px;font-weight:600;letter-spacing:-.015em;word-break:break-word}
+    .trk-party{
+      display:grid;grid-template-columns:1fr 1fr;gap:14px;
+    }
+    @media(max-width:560px){.trk-party{grid-template-columns:1fr}}
+    .trk-party-box{
+      background:var(--surface2);border-radius:16px;padding:14px 16px;
+    }
+    .trk-party-box .role{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+    .trk-party-box .name{font-size:15px;font-weight:700;letter-spacing:-.02em}
+    .trk-party-box .detail{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4}
+    .trk-route-strip{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      background:var(--dark);color:#fff;border-radius:18px;padding:18px 20px;margin-bottom:16px;
+    }
+    .trk-route-strip .code{font-size:28px;font-weight:900;letter-spacing:-.05em;line-height:1}
+    .trk-route-strip .city{font-size:11px;color:#9da8a1;margin-top:4px}
+    .trk-route-strip .mid{text-align:center;flex:1}
+    .trk-route-strip .mid .plane{font-size:18px;color:var(--accent)}
+    .trk-route-strip .mid small{display:block;font-size:11px;color:#9da8a1;margin-top:4px}
+    .trk-map-wrap{position:relative}
+    .trk-map{
+      height:380px;width:100%;border-radius:0;border:0;background:var(--surface2);
+    }
+    .trk-map.map-empty{
+      display:grid;place-items:center;color:var(--muted);font-size:13px;padding:24px;text-align:center;
+      min-height:220px;
+    }
+    .trk-map-note{
+      display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;
+      padding:12px 20px;border-top:1px solid var(--line);background:var(--surface2);
+      font-size:13px;color:var(--muted);
+    }
+    .trk-map-note strong{color:var(--ink)}
+    .trk-stops{max-height:380px;overflow:auto}
+    .trk-stop{
+      display:flex;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);
+    }
+    .trk-stop:last-child{border-bottom:0}
+    .trk-stop.current{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+    .trk-stop-marker{
+      width:28px;height:28px;border-radius:50%;background:var(--surface2);border:2px solid var(--line);
+      display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0;color:var(--muted);
+    }
+    .trk-stop.current .trk-stop-marker{background:var(--accent);border-color:var(--accent);color:#0a100b}
+    .trk-stop .name{font-size:13px;font-weight:700;letter-spacing:-.015em}
+    .trk-stop .kind{font-size:11px;color:var(--muted);margin-top:2px}
+    .trk-events{display:flex;flex-direction:column}
+    .trk-event{
+      display:grid;grid-template-columns:16px 1fr;gap:14px;padding:14px 0;
+      border-bottom:1px solid var(--line);
+    }
+    .trk-event:last-child{border-bottom:0}
+    .trk-event-rail{display:flex;justify-content:center;padding-top:4px}
+    .trk-event-dot{width:10px;height:10px;border-radius:50%}
+    .trk-event-status{font-size:14px;font-weight:700;letter-spacing:-.015em}
+    .trk-event-loc{font-size:12px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:4px}
+    .trk-event-time{font-size:12px;color:var(--muted);margin-top:3px}
+    .trk-event-note{font-size:12px;color:var(--muted);margin-top:6px;font-style:italic}
+    .trk-exception{
+      display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;
+      background:var(--error-light);color:var(--error);margin-bottom:14px;font-size:13px;line-height:1.45;
+    }
+    .trk-flight-meta{
+      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:4px;
+    }
+    @media(max-width:720px){.trk-flight-meta{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .trk-flight-meta .cell{
+      background:var(--surface2);border-radius:14px;padding:12px 14px;
+    }
+    .trk-flight-meta .cell .k{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    .trk-flight-meta .cell .v{font-size:15px;font-weight:700;margin-top:3px;letter-spacing:-.02em}
+    .trk-carrier-row{display:flex;align-items:center;gap:10px;margin-top:4px}
+    .trk-carrier-av{
+      width:36px;height:36px;border-radius:11px;display:grid;place-items:center;
+      font-size:12px;font-weight:800;color:#fff;flex-shrink:0;
+    }
+    .trk-copy-btn,.trk-share-btn{
+      border:1px solid var(--line);background:var(--surface2);color:var(--ink);
+      border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;
+      display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+      transition:transform .15s ease,background .15s ease;
+    }
+    .trk-copy-btn:hover,.trk-share-btn:hover{transform:translateY(-1px);background:var(--surface)}
+    .trk-search-again{margin-top:8px}
+    .trk-search-again .card{padding:20px}
+    .trk-search-again h2{margin:0 0 6px;font-size:18px}
+    .trk-search-again p{margin:0 0 14px;color:var(--muted);font-size:13px}
+    /* Keep legacy map selectors working inside new cards */
+    .trk-card .tracking-map{height:380px;border-radius:0;border:0}
+    .trk-card .route-layout{display:block}
+    .trk-card .route-list{display:none}
+.result-page .summary{padding-top:24px}
     .product-page .landing-hero{padding-bottom:32px}
 
     /* Responsive */
@@ -926,12 +1093,77 @@
       return null;
     }
     function routeText(value){ return String(value || '').trim(); }
+    
+    const CITY_COORDS = {
+      'new york':[40.6413,-73.7781],'jfk':[40.6413,-73.7781],'nyc':[40.7128,-74.0060],
+      'los angeles':[33.9425,-118.4081],'lax':[33.9425,-118.4081],'la':[34.0522,-118.2437],
+      'london':[51.4700,-0.4543],'lhr':[51.4700,-0.4543],'heathrow':[51.4700,-0.4543],
+      'paris':[49.0097,2.5479],'cdg':[49.0097,2.5479],
+      'dubai':[25.2532,55.3657],'dxb':[25.2532,55.3657],
+      'singapore':[1.3644,103.9915],'sin':[1.3644,103.9915],
+      'lagos':[6.5774,3.3212],'los':[6.5774,3.3212],
+      'abuja':[9.0068,7.2631],'accra':[5.6052,-0.1668],
+      'chicago':[41.9742,-87.9073],'ord':[41.9742,-87.9073],
+      'miami':[25.7959,-80.2870],'mia':[25.7959,-80.2870],
+      'houston':[29.9902,-95.3368],'iah':[29.9902,-95.3368],
+      'dallas':[32.8998,-97.0403],'dfw':[32.8998,-97.0403],
+      'atlanta':[33.6407,-84.4277],'atl':[33.6407,-84.4277],
+      'san francisco':[37.6213,-122.3790],'sfo':[37.6213,-122.3790],
+      'seattle':[47.4502,-122.3088],'sea':[47.4502,-122.3088],
+      'boston':[42.3656,-71.0096],'bos':[42.3656,-71.0096],
+      'washington':[38.8512,-77.0402],'iad':[38.8512,-77.0402],'dca':[38.8521,-77.0377],
+      'toronto':[43.6777,-79.6248],'yyz':[43.6777,-79.6248],
+      'tokyo':[35.5494,139.7798],'hnd':[35.5494,139.7798],'nrt':[35.7720,140.3929],
+      'hong kong':[22.3080,113.9185],'hkg':[22.3080,113.9185],
+      'frankfurt':[50.0379,8.5622],'fra':[50.0379,8.5622],
+      'amsterdam':[52.3105,4.7683],'ams':[52.3105,4.7683],
+      'istanbul':[41.2753,28.7519],'ist':[41.2753,28.7519],
+      'johannesburg':[-26.1367,28.2411],'jnb':[-26.1367,28.2411],
+      'nairobi':[-1.3192,36.9275],'nbo':[-1.3192,36.9275],
+      'cairo':[30.1127,31.4000],'cai':[30.1127,31.4000],
+      'sydney':[-33.9399,151.1753],'syd':[-33.9399,151.1753],
+      'port harcourt':[5.0155,6.9496],'phc':[5.0155,6.9496]
+    };
+    function geoLookup(text){
+      const raw = String(text||'').toLowerCase();
+      if(!raw) return null;
+      // try airport code first token
+      const code = raw.split(/[\s·|,/-]+/)[0].replace(/[^a-z0-9]/g,'');
+      if(CITY_COORDS[code]) return {latitude:CITY_COORDS[code][0],longitude:CITY_COORDS[code][1]};
+      for(const key of Object.keys(CITY_COORDS)){
+        if(raw.includes(key)) return {latitude:CITY_COORDS[key][0],longitude:CITY_COORDS[key][1]};
+      }
+      return null;
+    }
+    function enrichStopCoords(stop){
+      if(!stop) return stop;
+      if(Number.isFinite(Number(stop.latitude)) && Number.isFinite(Number(stop.longitude))){
+        return {...stop,latitude:Number(stop.latitude),longitude:Number(stop.longitude)};
+      }
+      const g = geoLookup(stop.name || stop.city || stop.code || '');
+      if(g) return {...stop,latitude:g.latitude,longitude:g.longitude};
+      return stop;
+    }
+
     function routeStops(record, type){
       const stored = type === 'shipment' ? safe(record,'shipping.routeStops',null) : record.routeStops;
-      if(Array.isArray(stored) && stored.length) return stored;
-      const origin = type === 'shipment' ? safe(record,'sender.city','Origin') : (record.origin || 'Origin');
-      const destination = type === 'shipment' ? safe(record,'recipient.city','Destination') : (record.destination || 'Destination');
-      return [{id:'origin',name:routeText(origin),kind:'Origin'},{id:'destination',name:routeText(destination),kind:'Destination'}];
+      let stops;
+      if(Array.isArray(stored) && stored.length){
+        stops = stored.map(enrichStopCoords);
+      } else {
+        const origin = type === 'shipment' ? safe(record,'sender.city','Origin') : (record.origin || record.originCode || 'Origin');
+        const destination = type === 'shipment' ? safe(record,'recipient.city','Destination') : (record.destination || record.destinationCode || 'Destination');
+        const oName = routeText(origin);
+        const dName = routeText(destination);
+        const oGeo = geoLookup(oName) || geoLookup(record.originCode) || {};
+        const dGeo = geoLookup(dName) || geoLookup(record.destinationCode) || {};
+        stops = [
+          {id:'origin',name:oName,kind:'Origin',latitude:oGeo.latitude,longitude:oGeo.longitude},
+          {id:'destination',name:dName,kind:'Destination',latitude:dGeo.latitude,longitude:dGeo.longitude}
+        ];
+      }
+      // Midpoint current location if we have both ends and a current city without coords
+      return stops.map(enrichStopCoords);
     }
     function currentLocation(record, type){
       const events = Array.isArray(record.events) ? record.events.slice().sort((a,b)=>new Date(b.timestamp || 0)-new Date(a.timestamp || 0)) : [];
@@ -968,19 +1200,73 @@
     function mapCard(record, type, title, subtitle){
       const stops = routeStops(record,type), location = currentLocation(record,type);
       const selected = (record.events || []).slice().sort((a,b)=>new Date(b.timestamp || 0)-new Date(a.timestamp || 0))[0]?.routeStopId || stops[0]?.id;
-      const mapStops = stops.filter(stop=>Number.isFinite(Number(stop.latitude)) && Number.isFinite(Number(stop.longitude))).map(stop=>({...stop,latitude:Number(stop.latitude),longitude:Number(stop.longitude)}));
-      if(location && !mapStops.some(stop=>stop.latitude === location.latitude && stop.longitude === location.longitude)) mapStops.push({id:'current',name:location.label,kind:'Current location',latitude:location.latitude,longitude:location.longitude});
-      const rows = stops.map((stop,index)=>`<div class="route-row ${stop.id === selected ? 'current' : ''}"><span class="route-marker">${stop.id === selected ? '●' : index + 1}</span><span><span class="route-name">${esc(stop.name || 'Route location')}</span><span class="route-kind">${index === 0 ? 'Origin' : index === stops.length - 1 ? 'Destination' : 'Stopover'} · ${esc(stop.kind || 'Location')}</span></span></div>`).join('');
-      const mapsUrl = location ? liveMapsUrl(location.latitude, location.longitude) : null;
-      return `<section class="card card-pad"><div class="section-title"><h3>${esc(title)}</h3><div class="section-title-side"><span>${esc(subtitle)}</span>${mapsUrl ? `<a class="btn btn-ghost map-open-btn" data-live-maps data-lat="${esc(String(location.latitude))}" data-lng="${esc(String(location.longitude))}" href="${esc(mapsUrl)}" target="_blank" rel="noopener">${icon('map')} Open in maps</a>` : ''}</div></div>${location ? `<div class="tracking-map-note"><strong>${esc(location.label)}</strong><span class="mono">Updated ${fmtDateTime(location.timestamp)}</span></div>` : ''}<div class="route-layout">${mapStops.length ? `<div class="tracking-map" data-route-map data-stops="${esc(JSON.stringify(mapStops))}" data-current-id="${esc(selected || 'current')}"></div>` : `<div class="tracking-map map-empty">Route coordinates are not available yet. Progress updates are still shown below.</div>`}<div class="route-list">${rows || '<div class="map-empty">No route stops have been published.</div>'}</div></div></section>`;
+      let mapStops = stops.filter(stop=>Number.isFinite(Number(stop.latitude)) && Number.isFinite(Number(stop.longitude))).map(stop=>({...stop,latitude:Number(stop.latitude),longitude:Number(stop.longitude)}));
+      if(location && Number.isFinite(location.latitude) && Number.isFinite(location.longitude)){
+        if(!mapStops.some(stop=>Math.abs(stop.latitude - location.latitude)<0.01 && Math.abs(stop.longitude - location.longitude)<0.01)){
+          mapStops.push({id:'current',name:location.label,kind:'Current location',latitude:location.latitude,longitude:location.longitude});
+        }
+      } else if(record.currentLocation){
+        const g = geoLookup(record.currentLocation);
+        if(g && !mapStops.some(s=>Math.abs(s.latitude-g.latitude)<0.01 && Math.abs(s.longitude-g.longitude)<0.01)){
+          mapStops.push({id:'current',name:record.currentLocation,kind:'Current location',latitude:g.latitude,longitude:g.longitude});
+        }
+      }
+      const rows = stops.map((stop,index)=>`<div class="trk-stop ${stop.id === selected || stop.id === 'current' ? 'current' : ''}"><span class="trk-stop-marker">${stop.id === selected || stop.id === 'current' ? '●' : (index + 1)}</span><span><div class="name">${esc(stop.name || 'Route location')}</div><div class="kind">${index === 0 ? 'Origin' : index === stops.length - 1 ? 'Destination' : 'Checkpoint'} · ${esc(stop.kind || 'Location')}</div></span></div>`).join('');
+      const mapsUrl = location ? liveMapsUrl(location.latitude, location.longitude) : (mapStops[0] ? liveMapsUrl(mapStops[0].latitude, mapStops[0].longitude) : null);
+      const locLabel = location?.label || record.currentLocation || stops.find(s=>s.id===selected)?.name || '—';
+      const locTime = location?.timestamp ? fmtDateTime(location.timestamp) : (record.updatedAt ? fmtDateTime(record.updatedAt) : '—');
+      return `<section class="trk-card">
+        <div class="trk-card-head">
+          <h3>${esc(title)}</h3>
+          <div class="side" style="display:flex;align-items:center;gap:10px">
+            <span>${esc(subtitle)}</span>
+            ${mapsUrl ? `<a class="trk-share-btn" data-live-maps data-lat="${esc(String(location?.latitude || mapStops[0]?.latitude || ''))}" data-lng="${esc(String(location?.longitude || mapStops[0]?.longitude || ''))}" href="${esc(mapsUrl)}" target="_blank" rel="noopener">${icon('map')} Open maps</a>` : ''}
+          </div>
+        </div>
+        <div class="trk-map-wrap">
+          ${mapStops.length
+            ? `<div class="trk-map tracking-map" data-route-map data-stops="${esc(JSON.stringify(mapStops))}" data-current-id="${esc(selected || 'current')}"></div>`
+            : `<div class="trk-map map-empty">Route coordinates are not available yet.<br>Progress updates still appear in the timeline below.</div>`}
+          <div class="trk-map-note"><strong>${esc(locLabel)}</strong><span class="mono">Updated ${esc(locTime)}</span></div>
+        </div>
+        <div class="trk-stops">${rows || '<div class="trk-stop"><span class="kind">No route stops published.</span></div>'}</div>
+      </section>`;
     }
     function timeline(record, type){
-      const flow = type === 'shipment' ? STATUS_FLOW : FLIGHT_FLOW, status = record.status || flow[0], index = Math.max(0, flow.indexOf(status)), fill = flow.length > 1 ? (index / (flow.length - 1)) * 100 : 0;
-      const steps = flow.map((name, i)=>`<div class="step ${i < index ? 'complete' : i === index ? 'active' : ''}"><div class="step-dot">${i < index ? icon('check') : i === index ? '<span class="pulse"></span>' : ''}</div><span class="step-label">${esc(name)}</span></div>`).join('');
+      const flow = type === 'shipment' ? STATUS_FLOW : FLIGHT_FLOW;
+      const status = record.status || flow[0];
+      const index = Math.max(0, flow.indexOf(status));
+      const fill = flow.length > 1 ? (index / (flow.length - 1)) * 100 : 0;
+      const steps = flow.map((name, i)=>{
+        const cls = i < index ? 'complete' : i === index ? 'active' : '';
+        const inner = i < index ? '✓' : i === index ? '●' : '';
+        return `<div class="trk-prog-step ${cls}"><div class="trk-prog-dot">${inner}</div><span>${esc(name)}</span></div>`;
+      }).join('');
       const events = (record.events || []).slice().sort((a,b)=>new Date(b.timestamp || 0)-new Date(a.timestamp || 0));
-      const eventsHtml = events.map(event=>{ const color = statusColor(event.status); return `<div class="event"><div class="event-rail"><div class="event-dot" style="background:${color.fg}"></div></div><div><div class="event-status" style="color:${color.fg}">${esc(event.status || 'Update')}</div>${event.location ? `<div class="event-location">${icon('map-pin')} ${esc(event.location)}</div>` : ''}<div class="event-time">${fmtDateTime(event.timestamp)}</div>${event.description && !/^automatic timestamp-based update$/i.test(event.description.trim()) ? `<div class="event-note">“${esc(event.description)}”</div>` : ''}</div></div>`; }).join('') || '<div style="color:var(--muted);font-size:13px">No tracking events yet.</div>';
-      const exception = status === 'Delivery Exception' ? `<div class="exception">${icon('alert-triangle')}<span><strong>Delivery exception reported.</strong> ${esc(events.find(event=>event.status === 'Delivery Exception')?.description || 'The carrier flagged an issue with this shipment.')}</span></div>` : '';
-      return `<section class="card card-pad"><div class="timeline"><div class="fill" style="width:${fill}%"></div>${steps}</div>${exception}<div class="section-title" style="margin-top:26px"><h3>${type === 'shipment' ? 'Tracking history' : 'Flight history'}</h3></div><div class="events">${eventsHtml}</div></section>`;
+      const eventsHtml = events.map(event=>{
+        const color = statusColor(event.status);
+        return `<div class="trk-event">
+          <div class="trk-event-rail"><div class="trk-event-dot" style="background:${color.fg}"></div></div>
+          <div>
+            <div class="trk-event-status" style="color:${color.fg}">${esc(event.status || 'Update')}</div>
+            ${event.location ? `<div class="trk-event-loc">${icon('map-pin')} ${esc(event.location)}</div>` : ''}
+            <div class="trk-event-time">${fmtDateTime(event.timestamp || event.time)}</div>
+            ${event.description && !/^automatic timestamp-based update$/i.test(String(event.description).trim()) ? `<div class="trk-event-note">“${esc(event.description)}”</div>` : ''}
+          </div>
+        </div>`;
+      }).join('') || '<div style="color:var(--muted);font-size:13px;padding:8px 0">No tracking events yet.</div>';
+      const exception = status === 'Delivery Exception'
+        ? `<div class="trk-exception">${icon('alert-triangle')}<span><strong>Delivery exception reported.</strong> ${esc(events.find(event=>event.status === 'Delivery Exception')?.description || 'The carrier flagged an issue with this shipment.')}</span></div>`
+        : '';
+      return `<section class="trk-card">
+        <div class="trk-card-head"><h3>${type === 'shipment' ? 'Delivery progress' : 'Flight progress'}</h3><span class="side">Live status</span></div>
+        <div class="trk-card-body">
+          <div class="trk-progress"><div class="trk-fill" style="width:${fill}%"></div>${steps}</div>
+          ${exception}
+        </div>
+        <div class="trk-card-head" style="border-top:1px solid var(--line)"><h3>${type === 'shipment' ? 'Tracking history' : 'Flight history'}</h3><span class="side">${events.length} update${events.length===1?'':'s'}</span></div>
+        <div class="trk-card-body"><div class="trk-events">${eventsHtml}</div></div>
+      </section>`;
     }
     function heroSection(){
       return `<section class="landing-hero" aria-label="TrackPort overview"><div class="wrap"><span class="hero-kicker">Global shipment visibility</span><h1>Track every <span class="accent">journey</span></h1><p>Follow a shipment or flight using its tracking number. Clear status, live route, and full history.</p></div></section>`;
@@ -990,13 +1276,247 @@
       return `${sentinel}<div class="search-panel${sticky ? '' : ' static-panel'}" id="tracking-search"><section class="card"><h2>Track your shipment</h2><p>Enter a shipment or flight tracking number for the latest route and status.</p><form id="search-form" class="search-form"><input id="search-input" class="mono" placeholder="SHP-2026-8F42K9" autocomplete="off" aria-label="Tracking number" value="${esc(value)}"><button class="btn btn-accent" type="submit" aria-label="Track">${icon('search')} Track</button></form>${message ? `<p style="color:var(--error);margin:14px 0 0;font-size:13px">${icon('alert-triangle')} ${esc(message)}</p>` : ''}</section></div>`;
     }
     function shipmentPage(record){
-      const shipping = record.shipping || {}, sender = record.sender || {}, recipient = record.recipient || {};
-      return `<div class="landing-page product-page">${heroSection()}<div class="landing-main result-page product-result"><div class="summary result-summary"><div class="ticket-tracking-card"><span class="ticket-tracking-label">Tracking Number</span><span class="ticket-number">${esc(record.trackingNumber)}</span></div><section class="card summary-card product-summary-card card-pad"><div class="summary-top product-summary-top">${record.imageUrl ? `<img src="${esc(record.imageUrl)}" alt="">` : `<div class="image-fallback">${icon('package')}</div>`}<div class="product-summary-info"><h2>${esc(record.productName || 'Shipment')}</h2><div class="product-badge-row">${badge(record.status)}</div>${shipping.carrier ? `<div class="carrier-chip"><span class="carrier-avatar" style="background:${carrierColor(shipping.carrier)}">${esc(carrierInitials(shipping.carrier))}</span><span>${esc(shipping.carrier)}</span></div>` : ''}</div></div><div class="summary-grid product-summary-grid"><div><div class="k">${icon('user')} Sender</div><div class="v">${esc(sender.fullName || '—')}</div></div><div><div class="k">${icon('user')} Recipient</div><div class="v">${esc(recipient.fullName || '—')}</div></div><div><div class="k">${icon('map-pin')} Origin</div><div class="v">${esc(sender.city || '—')}, ${esc(sender.country || '')}</div></div><div><div class="k">${icon('map-pin')} Destination</div><div class="v">${esc(recipient.city || '—')}, ${esc(recipient.country || '')}</div></div><div><div class="k">${icon('truck')} Method</div><div class="v">${esc(shipping.method || '—')}</div></div><div><div class="k">${icon('calendar')} Est. delivery</div><div class="v">${fmtDate(shipping.eta)}</div></div></div></section>${mapCard(record,'shipment','Live package route',`${shipping.method || 'Shipping'} · read-only`)}${timeline(record,'shipment')}${searchPanel('', record.trackingNumber, false)}</div></div></div>`;
+      const shipping = record.shipping || {};
+      const sender = record.sender || {};
+      const recipient = record.recipient || {};
+      const tn = record.trackingNumber || '';
+      const status = record.status || 'Order Created';
+      const carrier = shipping.carrier || record.carrier || 'TrackPort Logistics';
+      const method = shipping.method || record.method || 'Standard';
+      const eta = shipping.eta || record.eta || '';
+      const weight = shipping.weight != null ? shipping.weight : record.weight;
+      const dims = shipping.dimensions || record.dimensions || '';
+      const fee = shipping.fee != null ? shipping.fee : record.fee;
+      const currency = record.currency || 'USD';
+      const sym = currency==='USD'?'$':currency==='GBP'?'£':currency==='EUR'?'€':currency+' ';
+      const product = record.productName || 'Shipment';
+      const qty = record.quantity || 1;
+      const category = record.category || '';
+      const pkgType = shipping.packageType || record.packageType || '';
+      const origin = sender.city || record.origin || '—';
+      const dest = recipient.city || record.destination || '—';
+      const originCountry = sender.country || '';
+      const destCountry = recipient.country || '';
+      const created = record.createdAt || record.created || '';
+      const updated = record.updatedAt || (record.events && record.events[0] && (record.events[0].timestamp || record.events[0].time)) || created;
+      const statusTone = statusColor(status);
+      const etaLabel = eta ? fmtDate(eta) : 'Pending';
+      const copyJs = `navigator.clipboard&&navigator.clipboard.writeText('${esc(tn)}').then(()=>{if(window.showToast)showToast('Tracking number copied');else alert('Copied');}).catch(()=>{})`;
+
+      return `<div class="trk-page">
+        <div class="trk-head">
+          <div>
+            <h1>${esc(product)}</h1>
+            <p class="trk-sub">Shipment tracking · ${esc(carrier)} · ${esc(method)}</p>
+          </div>
+          <div class="trk-actions">
+            <button type="button" class="trk-copy-btn" onclick="${copyJs}">${icon('copy')} Copy tracking #</button>
+            <a class="trk-share-btn" href="?tracking=${encodeURIComponent(tn)}">${icon('search')} Track again</a>
+          </div>
+        </div>
+
+        <div class="trk-status-banner">
+          <div>
+            <div class="trk-status-label">Current status</div>
+            <div class="trk-status-name" style="color:${status === 'Delivered' ? '#c8ff4a' : '#fff'}">${esc(status)}</div>
+            <div class="trk-status-meta">
+              From <strong>${esc(origin)}</strong> to <strong>${esc(dest)}</strong>
+              ${record.currentLocation ? ` · Last seen in <strong>${esc(record.currentLocation)}</strong>` : ''}
+            </div>
+          </div>
+          <div class="trk-eta-box">
+            <div class="lbl">Estimated delivery</div>
+            <div class="val">${esc(etaLabel)}</div>
+            <div class="sub">Updated ${esc(fmtDateTime(updated))}</div>
+          </div>
+        </div>
+
+        <div class="trk-tn-row">
+          <div>
+            <div class="lbl">Tracking number</div>
+            <div class="num mono">${esc(tn)}</div>
+          </div>
+          <div class="trk-tn-actions">
+            ${badge(status)}
+            <div class="trk-carrier-row">
+              <span class="trk-carrier-av" style="background:${carrierColor(carrier)}">${esc(carrierInitials(carrier))}</span>
+              <span style="font-size:13px;font-weight:700">${esc(carrier)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="trk-grid">
+          <div style="display:flex;flex-direction:column;gap:18px">
+            ${mapCard(record,'shipment','Live package route',`${method} · read-only tracking`)}
+            ${timeline(record,'shipment')}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <section class="trk-card">
+              <div class="trk-card-head"><h3>Shipment details</h3></div>
+              <div class="trk-card-body">
+                <div class="trk-kv">
+                  <div><div class="k">Product</div><div class="v">${esc(product)}</div></div>
+                  <div><div class="k">Category</div><div class="v">${esc(category || '—')}</div></div>
+                  <div><div class="k">Quantity</div><div class="v">${esc(String(qty))}</div></div>
+                  <div><div class="k">Package type</div><div class="v">${esc(pkgType || '—')}</div></div>
+                  <div><div class="k">Weight</div><div class="v">${weight != null ? esc(String(weight)) + ' kg' : '—'}</div></div>
+                  <div><div class="k">Dimensions</div><div class="v">${esc(dims || '—')}</div></div>
+                  <div><div class="k">Service</div><div class="v">${esc(method)}</div></div>
+                  <div><div class="k">Shipping fee</div><div class="v">${fee != null ? sym + Number(fee).toFixed(2) + ' ' + esc(currency) : '—'}</div></div>
+                  <div><div class="k">Created</div><div class="v">${esc(fmtDateTime(created))}</div></div>
+                  <div><div class="k">Last update</div><div class="v">${esc(fmtDateTime(updated))}</div></div>
+                </div>
+                ${record.description ? `<p style="margin:14px 0 0;font-size:13px;color:var(--muted);line-height:1.5">${esc(record.description)}</p>` : ''}
+              </div>
+            </section>
+            <section class="trk-card">
+              <div class="trk-card-head"><h3>Sender &amp; recipient</h3></div>
+              <div class="trk-card-body">
+                <div class="trk-party">
+                  <div class="trk-party-box">
+                    <div class="role">Sender</div>
+                    <div class="name">${esc(sender.fullName || sender.name || '—')}</div>
+                    <div class="detail">${esc(origin)}${originCountry ? ', ' + esc(originCountry) : ''}</div>
+                    ${sender.phone ? `<div class="detail">${esc(sender.phone)}</div>` : ''}
+                    ${sender.email ? `<div class="detail">${esc(sender.email)}</div>` : ''}
+                  </div>
+                  <div class="trk-party-box">
+                    <div class="role">Recipient</div>
+                    <div class="name">${esc(recipient.fullName || recipient.name || '—')}</div>
+                    <div class="detail">${esc(dest)}${destCountry ? ', ' + esc(destCountry) : ''}</div>
+                    ${recipient.phone ? `<div class="detail">${esc(recipient.phone)}</div>` : ''}
+                    ${recipient.email ? `<div class="detail">${esc(recipient.email)}</div>` : ''}
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="trk-search-again">${searchPanel('', tn, false)}</div>
+      </div>`;
     }
     function airport(value){ const parts = String(value || '—').split(/\s*[·|—-]\s*/).filter(Boolean); return parts.length > 1 ? {code:parts.shift().toUpperCase(),name:parts.join(' ').toUpperCase()} : {code:String(value || '—').toUpperCase(),name:String(value || '—').toUpperCase()}; }
     function flightPage(record){
-      const from = airport(record.origin), to = airport(record.destination), routeDate = record.departure ? fmtDate(record.departure) : '—';
-      return `<div class="landing-page">${heroSection()}<div class="landing-main result-page"><div class="summary result-summary"><div class="ticket-tracking-card"><span class="ticket-tracking-label">Flight Ticket</span><span class="ticket-number">${esc(record.trackingNumber)}</span></div><section class="card ticket"><div class="ticket-top"><div class="airport"><div class="airport-code">${esc(from.code)}</div><div class="airport-name">${esc(from.name)}</div></div><div class="plane">${icon('send')}</div><div class="airport"><div class="airport-code">${esc(to.code)}</div><div class="airport-name">${esc(to.name)}</div></div></div><div class="ticket-rule"></div><div class="ticket-meta"><div><div class="k">Passenger</div><div class="v">${esc(record.passenger || '—')}</div></div><div><div class="k">Airline</div><div class="v">${esc(record.airline || '—')}</div></div><div><div class="k">Flight</div><div class="v mono">${esc(record.flightNo || '—')}</div></div><div><div class="k">Departure</div><div class="v">${esc(routeDate)}</div></div></div><div class="ticket-bottom"><span>${badge(record.status)}</span></div></section>${mapCard(record,'flight','Live flight route',`${record.airline || 'Airline'} · ${record.flightNo || 'Flight'}`)}${timeline(record,'flight')}${searchPanel('', record.trackingNumber, false)}</div></div></div>`;
+      const from = airport(record.originCode ? `${record.originCode} · ${record.origin || ''}` : record.origin);
+      const to = airport(record.destinationCode ? `${record.destinationCode} · ${record.destination || ''}` : record.destination);
+      const tn = record.trackingNumber || '';
+      const status = record.status || 'Ticket Booked';
+      const airline = record.airline || '—';
+      const flightNo = record.flightNo || '—';
+      const passenger = record.passenger || '—';
+      const seat = record.seat || '—';
+      const cabin = record.cabin || record.class || 'Economy';
+      const terminal = record.terminal || '—';
+      const gate = record.gate || '—';
+      const group = record.boardingGroup || '—';
+      const sequence = record.sequence || '—';
+      const etNo = record.etNo || tn;
+      const depDate = record.date || (record.departure ? fmtDate(record.departure) : '—');
+      const depTime = record.time || (record.departure ? (()=>{ try{ return new Date(record.departure).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }catch(_e){ return '—'; } })() : '—');
+      const updated = record.updatedAt || (record.events && record.events[0] && (record.events[0].timestamp || record.events[0].time)) || record.created || '';
+      const copyJs = `navigator.clipboard&&navigator.clipboard.writeText('${esc(tn)}').then(()=>{if(window.showToast)showToast('Tracking number copied');else alert('Copied');}).catch(()=>{})`;
+
+      return `<div class="trk-page">
+        <div class="trk-head">
+          <div>
+            <h1>${esc(airline)} ${esc(flightNo)}</h1>
+            <p class="trk-sub">Flight tracking · ${esc(from.code)} → ${esc(to.code)} · ${esc(depDate)}</p>
+          </div>
+          <div class="trk-actions">
+            <button type="button" class="trk-copy-btn" onclick="${copyJs}">${icon('copy')} Copy tracking #</button>
+            <a class="trk-share-btn" href="?tracking=${encodeURIComponent(tn)}">${icon('search')} Track again</a>
+          </div>
+        </div>
+
+        <div class="trk-status-banner">
+          <div>
+            <div class="trk-status-label">Flight status</div>
+            <div class="trk-status-name">${esc(status)}</div>
+            <div class="trk-status-meta">
+              <strong>${esc(passenger)}</strong> · ${esc(cabin)} · Seat ${esc(seat)}
+              ${record.currentLocation ? ` · Last reported: <strong>${esc(record.currentLocation)}</strong>` : ''}
+            </div>
+          </div>
+          <div class="trk-eta-box">
+            <div class="lbl">Departure</div>
+            <div class="val">${esc(depDate)}</div>
+            <div class="sub">${esc(depTime)} · Updated ${esc(fmtDateTime(updated))}</div>
+          </div>
+        </div>
+
+        <div class="trk-tn-row">
+          <div>
+            <div class="lbl">Tracking / e-ticket</div>
+            <div class="num mono">${esc(tn)}</div>
+          </div>
+          <div class="trk-tn-actions">
+            ${badge(status)}
+            <span style="font-size:13px;font-weight:700">${esc(airline)}</span>
+          </div>
+        </div>
+
+        <div class="trk-route-strip">
+          <div>
+            <div class="code">${esc(from.code)}</div>
+            <div class="city">${esc(from.name)}</div>
+          </div>
+          <div class="mid">
+            <div class="plane">✈</div>
+            <small>${esc(flightNo)} · ${esc(cabin)}</small>
+          </div>
+          <div style="text-align:right">
+            <div class="code">${esc(to.code)}</div>
+            <div class="city">${esc(to.name)}</div>
+          </div>
+        </div>
+
+        <div class="trk-flight-meta" style="margin-bottom:18px">
+          <div class="cell"><div class="k">Passenger</div><div class="v">${esc(passenger)}</div></div>
+          <div class="cell"><div class="k">Seat</div><div class="v">${esc(seat)}</div></div>
+          <div class="cell"><div class="k">Terminal / Gate</div><div class="v">${esc(terminal)} / ${esc(gate)}</div></div>
+          <div class="cell"><div class="k">Boarding group</div><div class="v">${esc(String(group))}</div></div>
+          <div class="cell"><div class="k">Class</div><div class="v">${esc(cabin)}</div></div>
+          <div class="cell"><div class="k">Sequence</div><div class="v">${esc(String(sequence))}</div></div>
+          <div class="cell"><div class="k">E-ticket</div><div class="v mono" style="font-size:13px">${esc(etNo)}</div></div>
+          <div class="cell"><div class="k">Airline</div><div class="v">${esc(airline)}</div></div>
+        </div>
+
+        <div class="trk-grid">
+          <div style="display:flex;flex-direction:column;gap:18px">
+            ${mapCard(record,'flight','Live flight route',`${airline} · ${flightNo}`)}
+            ${timeline(record,'flight')}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <section class="trk-card">
+              <div class="trk-card-head"><h3>Itinerary</h3></div>
+              <div class="trk-card-body">
+                <div class="trk-kv">
+                  <div><div class="k">Origin</div><div class="v">${esc(from.code)} · ${esc(from.name)}</div></div>
+                  <div><div class="k">Destination</div><div class="v">${esc(to.code)} · ${esc(to.name)}</div></div>
+                  <div><div class="k">Departure date</div><div class="v">${esc(depDate)}</div></div>
+                  <div><div class="k">Departure time</div><div class="v">${esc(depTime)}</div></div>
+                  <div><div class="k">Flight number</div><div class="v mono">${esc(flightNo)}</div></div>
+                  <div><div class="k">Status</div><div class="v">${esc(status)}</div></div>
+                </div>
+              </div>
+            </section>
+            <section class="trk-card">
+              <div class="trk-card-head"><h3>Passenger contact</h3></div>
+              <div class="trk-card-body">
+                <div class="trk-kv">
+                  <div><div class="k">Name</div><div class="v">${esc(passenger)}</div></div>
+                  <div><div class="k">Email</div><div class="v">${esc(record.email || '—')}</div></div>
+                  <div><div class="k">Phone</div><div class="v">${esc(record.phone || '—')}</div></div>
+                  <div><div class="k">Notes</div><div class="v">${esc(record.notes || '—')}</div></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="trk-search-again">${searchPanel('', tn, false)}</div>
+      </div>`;
     }
     function searchPage(message=''){
       return `<div class="landing-page">${heroSection()}<div class="landing-main">${searchPanel(message)}
@@ -1172,7 +1692,8 @@
         }).addTo(map);
         const line = points.map(point=>[point.latitude,point.longitude]);
         if(line.length > 1){
-          L.polyline(line,{color:'#b7f23a',weight:4,opacity:.9,dashArray:'8 8'}).addTo(map);
+          const poly=L.polyline(line,{color:'#b7f23a',weight:4,opacity:.95,dashArray:'10 8'}).addTo(map);
+        try{ if(poly._path) poly._path.style.strokeLinecap='round'; }catch(_e){}
         }
         const layers = points.map((point)=>{
           const current = point.id === element.dataset.currentId;
