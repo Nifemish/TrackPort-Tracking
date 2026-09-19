@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="theme-color" content="#f3f5f1">
   <title>TrackPort — Shipment Tracking</title>
   <meta name="description" content="Read-only shipment and flight tracking. Companion to TrackPort premium — track numbers created in the creator app.">
@@ -608,20 +611,55 @@
     .trk-route-strip .mid{text-align:center;flex:1}
     .trk-route-strip .mid .plane{font-size:18px;color:var(--accent)}
     .trk-route-strip .mid small{display:block;font-size:11px;color:#9da8a1;margin-top:4px}
-    .trk-map-wrap{position:relative}
+    .trk-map-wrap{position:relative;background:var(--surface2)}
     .trk-map{
-      height:380px;width:100%;border-radius:0;border:0;background:var(--surface2);
+      height:min(420px,55vh);min-height:280px;width:100%;border-radius:0;border:0;
+      background:#1a1f1c;z-index:0;
     }
     .trk-map.map-empty{
       display:grid;place-items:center;color:var(--muted);font-size:13px;padding:24px;text-align:center;
-      min-height:220px;
+      min-height:220px;background:var(--surface2);
     }
     .trk-map-note{
-      display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;
+      display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;
       padding:12px 20px;border-top:1px solid var(--line);background:var(--surface2);
       font-size:13px;color:var(--muted);
     }
     .trk-map-note strong{color:var(--ink)}
+    /* Leaflet polish inside TrackPort cards */
+    .trk-map .leaflet-container{font-family:var(--font-main);background:#1a1f1c}
+    .trk-map .leaflet-control-zoom a{
+      background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important;
+      width:34px!important;height:34px!important;line-height:34px!important;border-radius:10px!important;
+    }
+    .trk-map .leaflet-control-zoom{
+      border:0!important;box-shadow:0 8px 24px rgba(0,0,0,.25)!important;border-radius:12px!important;overflow:hidden;
+    }
+    .trk-map .leaflet-control-attribution{
+      background:color-mix(in srgb,var(--surface) 88%,transparent)!important;
+      color:var(--muted)!important;font-size:10px!important;border-radius:8px 0 0 0;
+      max-width:70%;
+    }
+    .trk-map .leaflet-control-attribution a{color:var(--ink)!important}
+    .tp-map-pin{
+      width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+      border:2px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.35);
+      display:grid;place-items:center;
+    }
+    .tp-map-pin > span{
+      transform:rotate(45deg);font-size:11px;font-weight:800;color:#0a100b;line-height:1;
+    }
+    .tp-map-pin.is-origin{background:#737a74}
+    .tp-map-pin.is-current{background:#b7f23a;width:32px;height:32px;box-shadow:0 0 0 6px rgba(183,242,58,.25),0 8px 18px rgba(0,0,0,.35)}
+    .tp-map-pin.is-dest{background:#3d9b5f}
+    .tp-map-pin.is-stop{background:#9ca69e}
+    .leaflet-popup-content-wrapper{
+      border-radius:14px!important;box-shadow:0 12px 32px rgba(0,0,0,.2)!important;
+      font-family:var(--font-main)!important;padding:4px 2px!important;
+    }
+    .leaflet-popup-content{margin:10px 12px!important;font-size:13px!important;line-height:1.4!important}
+    .leaflet-popup-content strong{display:block;font-size:14px;letter-spacing:-.02em;margin-bottom:2px}
+    .leaflet-popup-tip{box-shadow:none!important}
     .trk-stops{max-height:380px;overflow:auto}
     .trk-stop{
       display:flex;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line);
@@ -954,6 +992,104 @@
       appId: "1:275083219856:web:762d3127dd6370ded09915"
     };
 
+    
+    /* ===== Auto version updates (no clear-data needed) =====
+       Bump APP_VERSION every time you publish a new build.
+       On load (and every few minutes) the app fetches a tiny version file
+       with cache:no-store. If the server version differs, it hard-reloads. */
+    const APP_VERSION = '2026.09.19.1';
+    const APP_VERSION_KEY = 'trackport_tracking_app_version';
+    const APP_VERSION_URL = (function(){
+      try {
+        const u = new URL(location.href);
+        // Same folder as this page: version.json
+        const path = u.pathname.replace(/[^/]+$/, '') + 'version.json';
+        return path + (path.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now();
+      } catch(_e) {
+        return 'version.json?_=' + Date.now();
+      }
+    })();
+
+    async function fetchServerVersion(){
+      // 1) Prefer dedicated version.json (fast, easy to bump)
+      try {
+        const res = await fetch(APP_VERSION_URL, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        });
+        if(res.ok){
+          const data = await res.json();
+          if(data && data.version) return String(data.version);
+        }
+      } catch(_e) {}
+      // 2) Fallback: re-fetch this HTML and read APP_VERSION from it
+      try {
+        const pageUrl = location.pathname.split('?')[0] + '?_v=' + Date.now();
+        const res = await fetch(pageUrl, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+        if(res.ok){
+          const html = await res.text();
+          const m = html.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/);
+          if(m && m[1]) return m[1];
+        }
+      } catch(_e) {}
+      return null;
+    }
+
+    async function clearClientCaches(){
+      try {
+        if('caches' in window){
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch(_e) {}
+      try {
+        if(navigator.serviceWorker){
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+      } catch(_e) {}
+    }
+
+    async function applyUpdateIfNeeded(force){
+      try {
+        const remote = await fetchServerVersion();
+        if(!remote) return false;
+        const localStored = localStorage.getItem(APP_VERSION_KEY) || '';
+        // First visit: remember current server version, no reload
+        if(!localStored){
+          localStorage.setItem(APP_VERSION_KEY, remote);
+          return false;
+        }
+        // Running script version OR stored version differs from server → update
+        const needsUpdate = (remote !== APP_VERSION) || (remote !== localStored) || force;
+        if(!needsUpdate) return false;
+        localStorage.setItem(APP_VERSION_KEY, remote);
+        await clearClientCaches();
+        // Hard reload with cache-bust query so the WebView/browser fetches fresh HTML
+        const u = new URL(location.href);
+        u.searchParams.set('_tpv', remote);
+        u.searchParams.set('_t', String(Date.now()));
+        location.replace(u.toString());
+        return true;
+      } catch(err){
+        console.warn('[TrackPort] update check failed', err);
+        return false;
+      }
+    }
+
+    function startAutoUpdateChecker(){
+      // Run soon after boot, then periodically while the tab is open
+      setTimeout(function(){ applyUpdateIfNeeded(false); }, 1500);
+      setInterval(function(){ applyUpdateIfNeeded(false); }, 3 * 60 * 1000); // every 3 minutes
+      document.addEventListener('visibilitychange', function(){
+        if(document.visibilityState === 'visible') applyUpdateIfNeeded(false);
+      });
+      // Manual hook for you while testing
+      window.trackportForceUpdate = function(){ return applyUpdateIfNeeded(true); };
+      window.TRACKPORT_APP_VERSION = APP_VERSION;
+    }
+
+
     let shipments = {}, flights = {}, listeners = [], db = null, recordCache = {};
     /* Status flows aligned with the premium creator app */
     const STATUS_FLOW = ['Order Created','Shipment Confirmed','Picked Up','In Transit','Arrived at Facility','Out for Delivery','Delivered'];
@@ -1068,28 +1204,84 @@
       }
       return { type: 'shipment', record: normalizeShipmentRecord(record) };
     }
-    async function fetchRecordByNumber(code){
-      const key = String(code || '').trim().toUpperCase();
-      if(!key || !db) return null;
-      if(recordCache[key]) return recordCache[key];
-      // Prefer per-record docs written by premium TrackPort
-      try{
-        const snap = await recordDocRef(key).get();
-        if(snap.exists){
-          const parsed = parseCloudRecord(snap.data());
-          if(parsed?.record){
-            recordCache[key] = parsed;
-            if(parsed.type === 'flight') flights[key] = parsed.record;
-            else shipments[key] = parsed.record;
-            return parsed;
-          }
-        }
-      }catch(err){
-        console.warn('[TrackPort] per-record lookup failed', key, err);
-      }
-      // Legacy shared maps (if ever populated)
+    function candidateDocIds(code){
+      const raw = String(code || '').trim();
+      if(!raw) return [];
+      const variants = new Set();
+      [raw, raw.toUpperCase(), raw.toLowerCase()].forEach(v=>{
+        variants.add(sanitizeDocId(v));
+        variants.add(sanitizeDocId(v.replace(/\s+/g,'')));
+        variants.add(String(v).replace(/[^a-zA-Z0-9_-]/g,'_'));
+      });
+      return Array.from(variants).filter(Boolean);
+    }
+    function lookupInLocalMaps(key){
+      if(!key) return null;
+      const upper = String(key).toUpperCase();
       if(shipments[key]) return { type: 'shipment', record: normalizeShipmentRecord(shipments[key]) };
       if(flights[key]) return { type: 'flight', record: normalizeFlightRecord(flights[key]) };
+      for(const [k,v] of Object.entries(shipments||{})){
+        if(String(k).toUpperCase() === upper) return { type: 'shipment', record: normalizeShipmentRecord(v) };
+        if(v && String(v.trackingNumber||'').toUpperCase() === upper) return { type: 'shipment', record: normalizeShipmentRecord(v) };
+      }
+      for(const [k,v] of Object.entries(flights||{})){
+        if(String(k).toUpperCase() === upper) return { type: 'flight', record: normalizeFlightRecord(v) };
+        if(v && String(v.trackingNumber||'').toUpperCase() === upper) return { type: 'flight', record: normalizeFlightRecord(v) };
+      }
+      return null;
+    }
+    async function ensureDb(timeoutMs){
+      if(db) return db;
+      const limit = typeof timeoutMs === 'number' ? timeoutMs : 4000;
+      const start = Date.now();
+      while(!db && Date.now() - start < limit){
+        await new Promise(r=>setTimeout(r, 40));
+      }
+      return db;
+    }
+    async function fetchRecordByNumber(code){
+      const raw = String(code || '').trim();
+      const key = raw.toUpperCase();
+      if(!key) return null;
+      if(recordCache[key]) return recordCache[key];
+      const local = lookupInLocalMaps(key) || lookupInLocalMaps(raw);
+      if(local){ recordCache[key] = local; return local; }
+      const readyDb = await ensureDb(5000);
+      if(!readyDb){ console.warn('[TrackPort] Firestore not ready'); return null; }
+      for(const id of candidateDocIds(raw)){
+        try{
+          const snap = await readyDb.collection('nbatoolsState').doc('trackport-record-' + id).get();
+          if(snap.exists){
+            const parsed = parseCloudRecord(snap.data());
+            if(parsed && parsed.record){
+              recordCache[key] = parsed;
+              if(parsed.type === 'flight') flights[key] = parsed.record;
+              else shipments[key] = parsed.record;
+              return parsed;
+            }
+          }
+        }catch(err){ console.warn('[TrackPort] per-record lookup failed', id, err); }
+      }
+      try{
+        for(const val of [raw, key]){
+          try{
+            const qs = await readyDb.collection('nbatoolsState').where('trackingNumber','==',val).limit(3).get();
+            if(!qs.empty){
+              for(const doc of qs.docs){
+                const parsed = parseCloudRecord(doc.data());
+                if(parsed && parsed.record){
+                  recordCache[key] = parsed;
+                  if(parsed.type === 'flight') flights[key] = parsed.record;
+                  else shipments[key] = parsed.record;
+                  return parsed;
+                }
+              }
+            }
+          }catch(qErr){ console.warn('[TrackPort] query failed', qErr); }
+        }
+      }catch(err){ console.warn('[TrackPort] trackingNumber query failed', err); }
+      const local2 = lookupInLocalMaps(key);
+      if(local2){ recordCache[key] = local2; return local2; }
       return null;
     }
     function routeText(value){ return String(value || '').trim(); }
@@ -1572,27 +1764,43 @@
     }
     function recordFor(code){
       if(!code) return {record:null,type:null};
+      const key = String(code).trim().toUpperCase();
+      if(recordCache[key]) return recordCache[key];
       if(recordCache[code]) return recordCache[code];
-      if(code.startsWith('FLT-') && flights[code]) return {record:normalizeFlightRecord(flights[code]),type:'flight'};
-      if(shipments[code]) return {record:normalizeShipmentRecord(shipments[code]),type:'shipment'};
-      if(flights[code]) return {record:normalizeFlightRecord(flights[code]),type:'flight'};
+      if(typeof lookupInLocalMaps === 'function'){
+        const found = lookupInLocalMaps(key) || lookupInLocalMaps(code);
+        if(found){ recordCache[key] = found; return found; }
+      }
+      if(key.startsWith('FLT-') && flights[key]) return {record:normalizeFlightRecord(flights[key]),type:'flight'};
+      if(shipments[key]) return {record:normalizeShipmentRecord(shipments[key]),type:'shipment'};
+      if(flights[key]) return {record:normalizeFlightRecord(flights[key]),type:'flight'};
       return {record:null,type:null};
     }
     async function render(message=''){
       try{ if(typeof showPageLoader==='function') showPageLoader('Loading tracking', 350); }catch(_e){}
       const code = trackingCode();
       let result = recordFor(code);
+      let fetchError = null;
       if(code && !result.record){
         try{
           result = (await fetchRecordByNumber(code)) || {record:null,type:null};
         }catch(err){
           console.warn('[TrackPort] fetch failed', err);
+          fetchError = err;
           result = {record:null,type:null};
         }
       }
-      $('#app').innerHTML = code
-        ? (result.record ? (result.type === 'flight' ? flightPage(result.record) : shipmentPage(result.record)) : errorPage(`We couldn't find a shipment or flight with tracking number ${code}.`))
-        : searchPage(message);
+      let html;
+      if(!code){
+        html = searchPage(message);
+      } else if(result.record){
+        html = result.type === 'flight' ? flightPage(result.record) : shipmentPage(result.record);
+      } else if(!db){
+        html = errorPage('Tracking service is starting up. Please wait a second and search again.');
+      } else {
+        html = errorPage(`We couldn't find a shipment or flight with tracking number ${code}. If you just created it in TrackPort, make sure you were signed in so it could sync to the cloud.`);
+      }
+      $('#app').innerHTML = html;
       renderIcons(); wireMaps(); wireLiveMapLinks(); wireSearch(); wireLanding(); wireStickySearch(); wireTheme(); wireDrawer();
       try{ if(typeof hidePageLoader==='function') hidePageLoader(); }catch(_e){}
     }
@@ -1633,8 +1841,16 @@
       form.dataset.wired='1';
       form.addEventListener('submit', event=>{
         event.preventDefault();
-        const code = $('#search-input')?.value.trim().toUpperCase();
-        if(code) location.href = `?tracking=${encodeURIComponent(code)}`;
+        const code = ($('#search-input')?.value || '').trim().toUpperCase();
+        if(!code) return;
+        try{
+          const url = new URL(location.href);
+          url.searchParams.set('tracking', code);
+          history.replaceState(null, '', url.pathname + url.search + '#/track/' + encodeURIComponent(code));
+        }catch(_e){
+          location.hash = '#/track/' + encodeURIComponent(code);
+        }
+        render();
       });
     }
     function typeTestimonial(){
@@ -1671,80 +1887,225 @@
       }),{threshold:.14});
       items.forEach(item=>observer.observe(item));
     }
+    function mapTileProviders(){
+      // Free raster tiles — no API key required
+      const dark = (document.documentElement.dataset.theme || 'dark') !== 'light';
+      return dark ? [
+        {
+          id: 'carto-dark',
+          url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          options: {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+            subdomains: 'abcd', maxZoom: 20
+          }
+        },
+        {
+          id: 'osm',
+          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          options: {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            subdomains: 'abc', maxZoom: 19
+          }
+        },
+        {
+          id: 'esri-street',
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+          options: {
+            attribution: 'Tiles &copy; Esri',
+            maxZoom: 19
+          }
+        }
+      ] : [
+        {
+          id: 'carto-light',
+          url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+          options: {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+            subdomains: 'abcd', maxZoom: 20
+          }
+        },
+        {
+          id: 'osm',
+          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          options: {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            subdomains: 'abc', maxZoom: 19
+          }
+        },
+        {
+          id: 'esri-street',
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+          options: {
+            attribution: 'Tiles &copy; Esri',
+            maxZoom: 19
+          }
+        }
+      ];
+    }
+    function attachTileLayerWithFallback(map){
+      const providers = mapTileProviders();
+      let index = 0;
+      let layer = null;
+      let errorCount = 0;
+      const use = (i) => {
+        if(layer){
+          try{ map.removeLayer(layer); }catch(_e){}
+        }
+        const p = providers[i];
+        if(!p) return;
+        layer = L.tileLayer(p.url, Object.assign({
+          crossOrigin: true,
+          updateWhenIdle: true,
+          keepBuffer: 2
+        }, p.options));
+        layer.on('tileerror', () => {
+          errorCount++;
+          // After a few tile failures, try next free provider (no API key)
+          if(errorCount >= 3 && index < providers.length - 1){
+            errorCount = 0;
+            index++;
+            console.warn('[TrackPort] map tiles falling back to', providers[index].id);
+            use(index);
+          }
+        });
+        layer.addTo(map);
+      };
+      use(0);
+      return () => layer;
+    }
+    function mapPinIcon(point, isCurrent){
+      const kind = String(point.kind || point.id || '').toLowerCase();
+      let cls = 'is-stop';
+      if(isCurrent) cls = 'is-current';
+      else if(kind.includes('origin') || point.id === 'origin') cls = 'is-origin';
+      else if(kind.includes('dest')) cls = 'is-dest';
+      const label = isCurrent ? '•' : (cls === 'is-origin' ? 'A' : cls === 'is-dest' ? 'B' : '');
+      return L.divIcon({
+        className: 'tp-map-pin-wrap',
+        html: `<div class="tp-map-pin ${cls}"><span>${label}</span></div>`,
+        iconSize: isCurrent ? [32, 32] : [28, 28],
+        iconAnchor: isCurrent ? [16, 28] : [14, 24],
+        popupAnchor: [0, -22]
+      });
+    }
     function wireMaps(){
-      if(typeof L === 'undefined') return;
+      if(typeof L === 'undefined'){
+        console.warn('[TrackPort] Leaflet not loaded — map cannot render');
+        document.querySelectorAll('[data-route-map]').forEach(el=>{
+          if(el.dataset.wired) return;
+          el.dataset.wired = '1';
+          el.classList.add('map-empty');
+          el.innerHTML = 'Map library failed to load. Check your network and refresh.';
+        });
+        return;
+      }
       document.querySelectorAll('[data-route-map]').forEach(element=>{
         if(element.dataset.wired) return;
-        element.dataset.wired='1';
-        let points=[];
-        try{ points=JSON.parse(element.dataset.stops || '[]'); }catch(_error){}
-        if(!points.length) return;
-        const map = L.map(element,{
-          scrollWheelZoom:false,
-          zoomControl:true,
-          attributionControl:true
-        });
-        // Reliable free light basemap (Carto Positron) — OSM tiles often fail to load on some hosts
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
-          attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-          subdomains:'abcd',
-          maxZoom:20
-        }).addTo(map);
-        const line = points.map(point=>[point.latitude,point.longitude]);
-        if(line.length > 1){
-          const poly=L.polyline(line,{color:'#b7f23a',weight:4,opacity:.95,dashArray:'10 8'}).addTo(map);
-        try{ if(poly._path) poly._path.style.strokeLinecap='round'; }catch(_e){}
+        element.dataset.wired = '1';
+        let points = [];
+        try{ points = JSON.parse(element.dataset.stops || '[]'); }catch(_error){}
+        points = (points || []).filter(p => Number.isFinite(Number(p.latitude)) && Number.isFinite(Number(p.longitude)))
+          .map(p => ({
+            ...p,
+            latitude: Number(p.latitude),
+            longitude: Number(p.longitude)
+          }));
+        if(!points.length){
+          element.classList.add('map-empty');
+          element.textContent = 'Route coordinates are not available yet.';
+          return;
         }
-        const layers = points.map((point)=>{
-          const current = point.id === element.dataset.currentId;
-          const marker = L.circleMarker([point.latitude,point.longitude],{
-            radius: current?9:6,
-            color: current?'#0a100b':'#fff',
-            weight: current?3:2,
-            fillColor: current?'#b7f23a':'#737a74',
-            fillOpacity:1
+        // Clear any leftover content
+        element.innerHTML = '';
+        const map = L.map(element, {
+          scrollWheelZoom: false,
+          zoomControl: true,
+          attributionControl: true,
+          preferCanvas: true
+        });
+        attachTileLayerWithFallback(map);
+
+        const latlngs = points.map(p => [p.latitude, p.longitude]);
+        if(latlngs.length > 1){
+          // Soft underlay + accent route
+          L.polyline(latlngs, { color: '#0a100b', weight: 7, opacity: 0.25, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+          L.polyline(latlngs, {
+            color: '#b7f23a',
+            weight: 4,
+            opacity: 0.95,
+            dashArray: '10 8',
+            lineCap: 'round',
+            lineJoin: 'round'
           }).addTo(map);
-          marker.bindPopup(`<strong>${esc(point.name || 'Route location')}</strong><br><span>${esc(point.kind || 'Location')}</span>`);
+        }
+
+        const layers = points.map((point) => {
+          const current = String(point.id) === String(element.dataset.currentId);
+          const marker = L.marker([point.latitude, point.longitude], {
+            icon: mapPinIcon(point, current),
+            zIndexOffset: current ? 600 : 0
+          }).addTo(map);
+          marker.bindPopup(
+            `<strong>${esc(point.name || 'Route location')}</strong>` +
+            `<span style="color:#737a74">${esc(point.kind || 'Location')}</span>` +
+            (current ? `<div style="margin-top:6px;font-size:11px;font-weight:700;color:#315010">Current position</div>` : '')
+          );
           if(current) marker.openPopup();
           return marker;
         });
-        const bounds = L.featureGroup(layers).getBounds();
-        if(bounds.isValid()){
-          map.fitBounds(bounds.pad(0.18),{maxZoom:12,animate:false});
-        } else if(line.length){
-          map.setView(line[0], 6);
+
+        try{
+          const bounds = L.featureGroup(layers).getBounds();
+          if(bounds.isValid()){
+            map.fitBounds(bounds.pad(0.22), { maxZoom: 12, animate: false });
+          } else if(latlngs.length){
+            map.setView(latlngs[0], 6);
+          }
+        }catch(_e){
+          if(latlngs.length) map.setView(latlngs[0], 5);
         }
-        // Ensure tiles render after layout (card may still be measuring)
-        const fixSize = ()=> map.invalidateSize({animate:false});
+
+        const fixSize = () => {
+          try{ map.invalidateSize({ animate: false }); }catch(_e){}
+        };
         setTimeout(fixSize, 0);
         setTimeout(fixSize, 120);
         setTimeout(fixSize, 400);
-        // Also re-fix if the container becomes visible later
+        setTimeout(fixSize, 1000);
         if(typeof ResizeObserver !== 'undefined'){
-          const ro = new ResizeObserver(()=>fixSize());
+          const ro = new ResizeObserver(() => fixSize());
           ro.observe(element);
         }
+        // Re-fit once tiles have a chance to paint
+        map.whenReady(() => setTimeout(fixSize, 50));
       });
     }
     function listen(){
+      if(db) return;
       let app;
       try{
+        if(typeof firebase === 'undefined'){ console.error('[TrackPort] Firebase SDK missing'); return; }
         app = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
       }catch(error){
-        $('#app').innerHTML = errorPage('Firebase could not be initialized. Check the hosted site configuration.');
-        renderIcons();
+        console.error('[TrackPort] Firebase init failed', error);
+        try{ $('#app').innerHTML = errorPage('Firebase could not be initialized.'); renderIcons(); }catch(_e){}
         return;
       }
-      db = firebase.firestore(app);
-      // Legacy aggregate maps (optional — premium writes per-record docs instead)
+      try{
+        db = firebase.firestore(app);
+        try{ db.settings({ ignoreUndefinedProperties: true }); }catch(_e){}
+      }catch(error){
+        console.error('[TrackPort] Firestore init failed', error);
+        return;
+      }
       const attach = (key, setter) => db.collection('nbatoolsState').doc(key).onSnapshot(snapshot=>{
-        setter(snapshot.exists ? normalizeRecords(snapshot.data()?.value) : {});
+        try{ setter(snapshot.exists ? normalizeRecords(snapshot.data()?.value) : {}); }
+        catch(e){ console.warn(e); setter({}); }
         if(trackingCode()) render();
-      }, error=>{
-        console.warn(`Could not read ${key}`,error);
-      });
+      }, error=>{ console.warn(`Could not read ${key}`,error); });
       listeners.push(attach('shared:nbatools-shipments', value=>shipments=value));
       listeners.push(attach('shared:nbatools-flights', value=>flights=value));
+      if(trackingCode()) setTimeout(()=>{ try{ render(); }catch(_e){} }, 250);
     }
     window.addEventListener('hashchange', ()=>render());
     
@@ -1838,12 +2199,14 @@
     window.showPageLoader = showPageLoader;
     window.hidePageLoader = hidePageLoader;
 
-    window.addEventListener('DOMContentLoaded', ()=>{
+    window.addEventListener('DOMContentLoaded', async ()=>{
       try{ showPageLoader('SHIP • TRACK • DELIVER', 600); }catch(_e){}
+      try{ if(typeof startAutoUpdateChecker === 'function') startAutoUpdateChecker(); }catch(_e){}
       wireTheme();
       wireDrawer();
-      render();
-      listen();
+      try{ listen(); }catch(e){ console.warn('[TrackPort] listen', e); }
+      try{ if(typeof ensureDb === 'function') await ensureDb(2500); }catch(_e){}
+      try{ await render(); }catch(e){ console.warn('[TrackPort] render', e); }
       renderIcons();
     });
   </script>
