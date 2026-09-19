@@ -3,9 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <meta name="theme-color" content="#f3f5f1">
   <title>TrackPort — Shipment Tracking</title>
   <meta name="description" content="Read-only shipment and flight tracking. Companion to TrackPort premium — track numbers created in the creator app.">
@@ -614,7 +611,7 @@
     .trk-map-wrap{position:relative;background:var(--surface2)}
     .trk-map{
       height:min(420px,55vh);min-height:280px;width:100%;border-radius:0;border:0;
-      background:#1a1f1c;z-index:0;
+      background:#dce8ef;z-index:0;
     }
     .trk-map.map-empty{
       display:grid;place-items:center;color:var(--muted);font-size:13px;padding:24px;text-align:center;
@@ -627,7 +624,14 @@
     }
     .trk-map-note strong{color:var(--ink)}
     /* Leaflet polish inside TrackPort cards */
-    .trk-map .leaflet-container{font-family:var(--font-main);background:#1a1f1c}
+    .trk-map .leaflet-container{font-family:var(--font-main);background:#dce8ef}
+    .trk-map .leaflet-control-layers{
+      border:1px solid rgba(16,19,17,.18)!important;border-radius:10px!important;
+      box-shadow:0 8px 24px rgba(0,0,0,.2)!important;background:#fff!important;color:#101311!important;
+    }
+    .trk-map .leaflet-control-layers-toggle{width:38px!important;height:38px!important;background-size:21px 21px!important}
+    .trk-map .leaflet-control-layers-expanded{padding:10px 12px!important;font:600 12px/1.5 var(--font-main)!important}
+    .trk-map .leaflet-control-layers-separator{border-top-color:rgba(16,19,17,.16)!important}
     .trk-map .leaflet-control-zoom a{
       background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important;
       width:34px!important;height:34px!important;line-height:34px!important;border-radius:10px!important;
@@ -642,17 +646,18 @@
     }
     .trk-map .leaflet-control-attribution a{color:var(--ink)!important}
     .tp-map-pin{
-      width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
-      border:2px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.35);
+      width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+      border:3px solid #fff;box-shadow:0 0 0 2px rgba(9,24,18,.78),0 7px 18px rgba(0,0,0,.4);
       display:grid;place-items:center;
     }
     .tp-map-pin > span{
-      transform:rotate(45deg);font-size:11px;font-weight:800;color:#0a100b;line-height:1;
+      transform:rotate(45deg);font-size:11px;font-weight:800;color:#fff;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.5);
     }
-    .tp-map-pin.is-origin{background:#737a74}
-    .tp-map-pin.is-current{background:#b7f23a;width:32px;height:32px;box-shadow:0 0 0 6px rgba(183,242,58,.25),0 8px 18px rgba(0,0,0,.35)}
-    .tp-map-pin.is-dest{background:#3d9b5f}
-    .tp-map-pin.is-stop{background:#9ca69e}
+    .tp-map-pin.is-origin{background:#1261a0}
+    .tp-map-pin.is-current{background:#b7f23a;width:34px;height:34px;box-shadow:0 0 0 3px #fff,0 0 0 8px rgba(16,19,17,.45),0 8px 20px rgba(0,0,0,.4)}
+    .tp-map-pin.is-current > span{color:#0a100b;text-shadow:none}
+    .tp-map-pin.is-dest{background:#167342}
+    .tp-map-pin.is-stop{background:#5d6670}
     .leaflet-popup-content-wrapper{
       border-radius:14px!important;box-shadow:0 12px 32px rgba(0,0,0,.2)!important;
       font-family:var(--font-main)!important;padding:4px 2px!important;
@@ -991,104 +996,6 @@
       messagingSenderId: "275083219856",
       appId: "1:275083219856:web:762d3127dd6370ded09915"
     };
-
-    
-    /* ===== Auto version updates (no clear-data needed) =====
-       Bump APP_VERSION every time you publish a new build.
-       On load (and every few minutes) the app fetches a tiny version file
-       with cache:no-store. If the server version differs, it hard-reloads. */
-    const APP_VERSION = '2026.09.19.1';
-    const APP_VERSION_KEY = 'trackport_tracking_app_version';
-    const APP_VERSION_URL = (function(){
-      try {
-        const u = new URL(location.href);
-        // Same folder as this page: version.json
-        const path = u.pathname.replace(/[^/]+$/, '') + 'version.json';
-        return path + (path.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now();
-      } catch(_e) {
-        return 'version.json?_=' + Date.now();
-      }
-    })();
-
-    async function fetchServerVersion(){
-      // 1) Prefer dedicated version.json (fast, easy to bump)
-      try {
-        const res = await fetch(APP_VERSION_URL, {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-        });
-        if(res.ok){
-          const data = await res.json();
-          if(data && data.version) return String(data.version);
-        }
-      } catch(_e) {}
-      // 2) Fallback: re-fetch this HTML and read APP_VERSION from it
-      try {
-        const pageUrl = location.pathname.split('?')[0] + '?_v=' + Date.now();
-        const res = await fetch(pageUrl, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
-        if(res.ok){
-          const html = await res.text();
-          const m = html.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/);
-          if(m && m[1]) return m[1];
-        }
-      } catch(_e) {}
-      return null;
-    }
-
-    async function clearClientCaches(){
-      try {
-        if('caches' in window){
-          const keys = await caches.keys();
-          await Promise.all(keys.map(k => caches.delete(k)));
-        }
-      } catch(_e) {}
-      try {
-        if(navigator.serviceWorker){
-          const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(r => r.unregister()));
-        }
-      } catch(_e) {}
-    }
-
-    async function applyUpdateIfNeeded(force){
-      try {
-        const remote = await fetchServerVersion();
-        if(!remote) return false;
-        const localStored = localStorage.getItem(APP_VERSION_KEY) || '';
-        // First visit: remember current server version, no reload
-        if(!localStored){
-          localStorage.setItem(APP_VERSION_KEY, remote);
-          return false;
-        }
-        // Running script version OR stored version differs from server → update
-        const needsUpdate = (remote !== APP_VERSION) || (remote !== localStored) || force;
-        if(!needsUpdate) return false;
-        localStorage.setItem(APP_VERSION_KEY, remote);
-        await clearClientCaches();
-        // Hard reload with cache-bust query so the WebView/browser fetches fresh HTML
-        const u = new URL(location.href);
-        u.searchParams.set('_tpv', remote);
-        u.searchParams.set('_t', String(Date.now()));
-        location.replace(u.toString());
-        return true;
-      } catch(err){
-        console.warn('[TrackPort] update check failed', err);
-        return false;
-      }
-    }
-
-    function startAutoUpdateChecker(){
-      // Run soon after boot, then periodically while the tab is open
-      setTimeout(function(){ applyUpdateIfNeeded(false); }, 1500);
-      setInterval(function(){ applyUpdateIfNeeded(false); }, 3 * 60 * 1000); // every 3 minutes
-      document.addEventListener('visibilitychange', function(){
-        if(document.visibilityState === 'visible') applyUpdateIfNeeded(false);
-      });
-      // Manual hook for you while testing
-      window.trackportForceUpdate = function(){ return applyUpdateIfNeeded(true); };
-      window.TRACKPORT_APP_VERSION = APP_VERSION;
-    }
-
 
     let shipments = {}, flights = {}, listeners = [], db = null, recordCache = {};
     /* Status flows aligned with the premium creator app */
@@ -1888,90 +1795,63 @@
       items.forEach(item=>observer.observe(item));
     }
     function mapTileProviders(){
-      // Free raster tiles — no API key required
-      const dark = (document.documentElement.dataset.theme || 'dark') !== 'light';
-      return dark ? [
-        {
-          id: 'carto-dark',
-          url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-          options: {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-            subdomains: 'abcd', maxZoom: 20
-          }
-        },
-        {
-          id: 'osm',
+      // Authentic real-world map layers — no API key required.
+      return {
+        street: {
+          id: 'osm-street',
+          label: 'Real Street Map',
           url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
           options: {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             subdomains: 'abc', maxZoom: 19
           }
         },
-        {
+        satellite: {
+          id: 'esri-imagery',
+          label: 'Satellite View',
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          options: {
+            attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
+            maxZoom: 19
+          }
+        },
+        detailed: {
           id: 'esri-street',
+          label: 'Detailed Street Map',
           url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
           options: {
             attribution: 'Tiles &copy; Esri',
             maxZoom: 19
           }
         }
-      ] : [
-        {
-          id: 'carto-light',
-          url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-          options: {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-            subdomains: 'abcd', maxZoom: 20
-          }
-        },
-        {
-          id: 'osm',
-          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          options: {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            subdomains: 'abc', maxZoom: 19
-          }
-        },
-        {
-          id: 'esri-street',
-          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-          options: {
-            attribution: 'Tiles &copy; Esri',
-            maxZoom: 19
-          }
-        }
-      ];
-    }
-    function attachTileLayerWithFallback(map){
-      const providers = mapTileProviders();
-      let index = 0;
-      let layer = null;
-      let errorCount = 0;
-      const use = (i) => {
-        if(layer){
-          try{ map.removeLayer(layer); }catch(_e){}
-        }
-        const p = providers[i];
-        if(!p) return;
-        layer = L.tileLayer(p.url, Object.assign({
-          crossOrigin: true,
-          updateWhenIdle: true,
-          keepBuffer: 2
-        }, p.options));
-        layer.on('tileerror', () => {
-          errorCount++;
-          // After a few tile failures, try next free provider (no API key)
-          if(errorCount >= 3 && index < providers.length - 1){
-            errorCount = 0;
-            index++;
-            console.warn('[TrackPort] map tiles falling back to', providers[index].id);
-            use(index);
-          }
-        });
-        layer.addTo(map);
       };
-      use(0);
-      return () => layer;
+    }
+    function attachLiveMapLayers(map){
+      const providers = mapTileProviders();
+      const createLayer = provider => L.tileLayer(provider.url, Object.assign({
+        crossOrigin: true,
+        updateWhenIdle: true,
+        keepBuffer: 2
+      }, provider.options));
+      const street = createLayer(providers.street);
+      const satellite = createLayer(providers.satellite);
+      const detailed = createLayer(providers.detailed);
+      let defaultErrors = 0;
+      street.on('tileerror', () => {
+        defaultErrors++;
+        if(defaultErrors >= 3 && map.hasLayer(street)){
+          console.warn('[TrackPort] OpenStreetMap tiles unavailable; switching to Esri street map');
+          map.removeLayer(street);
+          detailed.addTo(map);
+        }
+      });
+      street.addTo(map);
+      L.control.layers({
+        [providers.street.label]: street,
+        [providers.satellite.label]: satellite,
+        [providers.detailed.label]: detailed
+      }, null, { position: 'topright', collapsed: false }).addTo(map);
+      return { street, satellite, detailed };
     }
     function mapPinIcon(point, isCurrent){
       const kind = String(point.kind || point.id || '').toLowerCase();
@@ -1983,8 +1863,8 @@
       return L.divIcon({
         className: 'tp-map-pin-wrap',
         html: `<div class="tp-map-pin ${cls}"><span>${label}</span></div>`,
-        iconSize: isCurrent ? [32, 32] : [28, 28],
-        iconAnchor: isCurrent ? [16, 28] : [14, 24],
+        iconSize: isCurrent ? [34, 34] : [30, 30],
+        iconAnchor: isCurrent ? [17, 30] : [15, 26],
         popupAnchor: [0, -22]
       });
     }
@@ -2023,17 +1903,18 @@
           attributionControl: true,
           preferCanvas: true
         });
-        attachTileLayerWithFallback(map);
+        attachLiveMapLayers(map);
 
         const latlngs = points.map(p => [p.latitude, p.longitude]);
         if(latlngs.length > 1){
-          // Soft underlay + accent route
-          L.polyline(latlngs, { color: '#0a100b', weight: 7, opacity: 0.25, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+          // High-contrast casing keeps the shipment route legible on streets and satellite imagery.
+          L.polyline(latlngs, { color: '#ffffff', weight: 10, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+          L.polyline(latlngs, { color: '#102018', weight: 7, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
           L.polyline(latlngs, {
             color: '#b7f23a',
             weight: 4,
-            opacity: 0.95,
-            dashArray: '10 8',
+            opacity: 1,
+            dashArray: '10 7',
             lineCap: 'round',
             lineJoin: 'round'
           }).addTo(map);
@@ -2201,7 +2082,6 @@
 
     window.addEventListener('DOMContentLoaded', async ()=>{
       try{ showPageLoader('SHIP • TRACK • DELIVER', 600); }catch(_e){}
-      try{ if(typeof startAutoUpdateChecker === 'function') startAutoUpdateChecker(); }catch(_e){}
       wireTheme();
       wireDrawer();
       try{ listen(); }catch(e){ console.warn('[TrackPort] listen', e); }
