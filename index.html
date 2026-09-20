@@ -520,6 +520,36 @@
     .trk-head h1{margin:0 0 6px;font-size:clamp(26px,4vw,36px);letter-spacing:-.04em;line-height:1.1}
     .trk-head .trk-sub{color:var(--muted);font-size:14px;margin:0;line-height:1.45}
     .trk-actions{display:flex;flex-wrap:wrap;gap:8px}
+    .trk-product-hero{
+      display:flex;align-items:flex-start;gap:16px;min-width:0;flex:1;
+    }
+    .trk-product-img,.trk-product-fallback{
+      width:88px;height:88px;border-radius:20px;object-fit:cover;flex:0 0 auto;
+      border:1px solid var(--line);background:var(--surface2);
+      box-shadow:0 10px 28px color-mix(in srgb,var(--ink) 8%,transparent);
+    }
+    .trk-product-fallback{
+      display:grid;place-items:center;color:var(--muted);
+    }
+    .trk-product-fallback svg{width:28px;height:28px}
+    .trk-product-meta{min-width:0;flex:1}
+    .trk-product-thumb-row{
+      display:flex;align-items:center;gap:14px;margin-bottom:16px;padding-bottom:16px;
+      border-bottom:1px solid var(--line);
+    }
+    .trk-product-thumb,.trk-product-thumb-fallback{
+      width:72px;height:72px;border-radius:16px;object-fit:cover;flex:0 0 auto;
+      border:1px solid var(--line);background:var(--surface2);
+    }
+    .trk-product-thumb-fallback{
+      display:grid;place-items:center;color:var(--muted);
+    }
+    .trk-product-thumb-fallback svg{width:22px;height:22px}
+    .trk-product-thumb-meta .name{font-size:15px;font-weight:700;letter-spacing:-.02em}
+    .trk-product-thumb-meta .meta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4}
+    @media(max-width:560px){
+      .trk-product-img,.trk-product-fallback{width:72px;height:72px;border-radius:16px}
+    }
     .trk-status-banner{
       display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
       background:var(--dark);color:#fff;border-radius:24px;padding:22px 24px;margin-bottom:18px;
@@ -891,6 +921,105 @@
       filter:brightness(1.06);
     }
 
+  
+    /* ===== Hidden package pickup desk ===== */
+    .pu-shell{max-width:960px;margin:0 auto;padding:calc(88px + env(safe-area-inset-top)) 18px 48px}
+    .pu-banner{
+      background:linear-gradient(145deg,#0c1210 0%,#163028 55%,#1a3d2e 100%);
+      color:#f3f7f2;border-radius:24px;padding:22px 22px 20px;margin-bottom:18px;
+      border:1px solid rgba(183,242,58,.18);box-shadow:var(--shadow);position:relative;overflow:hidden;
+    }
+    .pu-banner:before{
+      content:"";position:absolute;right:-40px;top:-50px;width:180px;height:180px;border-radius:50%;
+      border:28px solid rgba(183,242,58,.08);pointer-events:none;
+    }
+    .pu-banner .eyebrow{color:rgba(183,242,58,.85);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;margin:0 0 8px}
+    .pu-banner h1{margin:0 0 8px;font-size:clamp(24px,4.5vw,34px);letter-spacing:-.04em;line-height:1.1;font-weight:800}
+    .pu-banner p{margin:0;color:rgba(243,247,242,.72);font-size:14px;line-height:1.5;max-width:42ch}
+    .pu-secure{
+      display:inline-flex;align-items:center;gap:6px;margin-top:14px;padding:6px 12px;border-radius:999px;
+      background:rgba(183,242,58,.12);color:#c8ff4a;font-size:11px;font-weight:700;letter-spacing:.04em;
+    }
+    .pu-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
+    @media(max-width:860px){.pu-grid{grid-template-columns:1fr}}
+    .pu-card{
+      background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;
+    }
+    .pu-card-head{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:16px 18px;border-bottom:1px solid var(--line);
+    }
+    .pu-card-head h2{margin:0;font-size:16px;font-weight:800;letter-spacing:-.02em}
+    .pu-card-body{padding:18px}
+    .pu-photo{
+      width:100%;aspect-ratio:1.15;border-radius:16px;background:var(--surface2);border:1px solid var(--line);
+      overflow:hidden;display:grid;place-items:center;margin-bottom:16px;
+    }
+    .pu-photo img{width:100%;height:100%;object-fit:cover;display:block}
+    .pu-photo .fallback{font-size:42px;opacity:.45}
+    .pu-title{font-size:20px;font-weight:800;letter-spacing:-.03em;margin:0 0 4px}
+    .pu-sub{font-size:13px;color:var(--muted);margin:0 0 14px}
+    .pu-kv{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
+    @media(max-width:520px){.pu-kv{grid-template-columns:1fr}}
+    .pu-kv .k{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+    .pu-kv .v{font-size:14px;font-weight:600;letter-spacing:-.01em;word-break:break-word}
+    .pu-tn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--ink)}
+    .pu-status-pill{
+      display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;
+      background:rgba(183,242,58,.16);color:#2f5a12;font-size:11px;font-weight:800;letter-spacing:.02em;
+    }
+    [data-theme="dark"] .pu-status-pill{color:#d8ff9b;background:rgba(183,242,58,.14)}
+    .pu-fee-table{width:100%;border-collapse:collapse}
+    .pu-fee-table td{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+    .pu-fee-table td:last-child{text-align:right;font-weight:700}
+    .pu-fee-table tr:last-child td{border-bottom:0;padding-top:14px;font-size:16px;font-weight:800}
+    .pu-fee-table .muted-row td{color:var(--muted);font-weight:500}
+    .pu-crypto-list{display:flex;flex-direction:column;gap:10px}
+    .pu-crypto{
+      display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+      padding:12px 14px;border-radius:16px;border:1px solid var(--line);
+      background:var(--surface2);color:var(--ink);cursor:pointer;
+      transition:border-color .2s,box-shadow .2s,transform .2s;
+    }
+    .pu-crypto:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+    .pu-crypto.is-selected{
+      border-color:var(--accent);box-shadow:0 0 0 3px rgba(183,242,58,.18);
+      background:color-mix(in srgb,var(--accent) 10%,var(--surface));
+    }
+    .pu-crypto-icon{
+      width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+      font-size:13px;font-weight:900;color:#0a100b;flex-shrink:0;
+    }
+    .pu-crypto strong{display:block;font-size:14px;font-weight:800;letter-spacing:-.02em}
+    .pu-crypto span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+    .pu-pay-panel{
+      margin-top:14px;padding:14px;border-radius:16px;border:1px dashed var(--line);background:var(--surface2);
+    }
+    .pu-pay-panel .lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+    .pu-addr{
+      font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.45;
+      word-break:break-all;background:var(--surface);border:1px solid var(--line);
+      border-radius:12px;padding:12px;margin-bottom:10px;
+    }
+    .pu-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .pu-note{font-size:12px;color:var(--muted);line-height:1.5;margin:12px 0 0}
+    .pu-steps{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+    .pu-steps li{
+      display:flex;gap:12px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--muted);
+    }
+    .pu-steps .n{
+      width:24px;height:24px;border-radius:8px;background:var(--ink);color:var(--bg);
+      display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0;
+    }
+    .pu-steps strong{color:var(--ink);font-weight:700}
+    .pu-success{
+      display:none;padding:16px;border-radius:16px;background:var(--success-light);color:var(--success);
+      font-size:14px;font-weight:600;line-height:1.45;margin-top:12px;
+    }
+    .pu-success.on{display:block}
+    .pu-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px}
+    .pu-back:hover{color:var(--ink)}
+
   </style>
 </head>
 <body>
@@ -1084,6 +1213,8 @@
       };
       s.currentLocation = s.currentLocation || s.shipping.initialLocation || s.origin || '';
       s.events = Array.isArray(s.events) ? s.events : [];
+      const img = s.productImage || s.image || s.photo || s.imageUrl || s.productPhoto || s.thumbnail || s.picture || s.product_image || '';
+      s.productImage = (typeof img === 'string' && img.trim()) ? img.trim() : '';
       return s;
     }
     function normalizeFlightRecord(f){
@@ -1389,6 +1520,7 @@
       const currency = record.currency || 'USD';
       const sym = currency==='USD'?'$':currency==='GBP'?'£':currency==='EUR'?'€':currency+' ';
       const product = record.productName || 'Shipment';
+      const productImage = record.productImage || record.image || record.photo || record.imageUrl || record.productPhoto || record.thumbnail || record.picture || record.product_image || '';
       const qty = record.quantity || 1;
       const category = record.category || '';
       const pkgType = shipping.packageType || record.packageType || '';
@@ -1402,11 +1534,23 @@
       const etaLabel = eta ? fmtDate(eta) : 'Pending';
       const copyJs = `navigator.clipboard&&navigator.clipboard.writeText('${esc(tn)}').then(()=>{if(window.showToast)showToast('Tracking number copied');else alert('Copied');}).catch(()=>{})`;
 
+      const productImgHtml = productImage
+        ? `<img class="trk-product-img" src="${esc(productImage)}" alt="${esc(product)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='grid');">
+           <div class="trk-product-fallback" style="display:none" aria-hidden="true">${icon('package')}</div>`
+        : `<div class="trk-product-fallback" aria-hidden="true">${icon('package')}</div>`;
+      const productThumbHtml = productImage
+        ? `<img class="trk-product-thumb" src="${esc(productImage)}" alt="${esc(product)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='grid');">
+           <div class="trk-product-thumb-fallback" style="display:none" aria-hidden="true">${icon('package')}</div>`
+        : `<div class="trk-product-thumb-fallback" aria-hidden="true">${icon('package')}</div>`;
+
       return `<div class="trk-page">
         <div class="trk-head">
-          <div>
-            <h1>${esc(product)}</h1>
-            <p class="trk-sub">Shipment tracking · ${esc(carrier)} · ${esc(method)}</p>
+          <div class="trk-product-hero">
+            ${productImgHtml}
+            <div class="trk-product-meta">
+              <h1>${esc(product)}</h1>
+              <p class="trk-sub">Shipment tracking · ${esc(carrier)} · ${esc(method)}</p>
+            </div>
           </div>
           <div class="trk-actions">
             <button type="button" class="trk-copy-btn" onclick="${copyJs}">${icon('copy')} Copy tracking #</button>
@@ -1453,6 +1597,13 @@
             <section class="trk-card">
               <div class="trk-card-head"><h3>Shipment details</h3></div>
               <div class="trk-card-body">
+                <div class="trk-product-thumb-row">
+                  ${productThumbHtml}
+                  <div class="trk-product-thumb-meta">
+                    <div class="name">${esc(product)}</div>
+                    <div class="meta">${esc(category || 'Product')}${qty ? ' · Qty ' + esc(String(qty)) : ''}${pkgType ? ' · ' + esc(pkgType) : ''}</div>
+                  </div>
+                </div>
                 <div class="trk-kv">
                   <div><div class="k">Product</div><div class="v">${esc(product)}</div></div>
                   <div><div class="k">Category</div><div class="v">${esc(category || '—')}</div></div>
@@ -1617,6 +1768,217 @@
         <div class="trk-search-again">${searchPanel('', tn, false)}</div>
       </div>`;
     }
+
+    function pickupCryptoMethods(totalUsd){
+      const total = Math.max(0, Number(totalUsd) || 0);
+      /* Demo receive addresses — replace with your real wallets in production */
+      return [
+        {
+          id: 'btc',
+          name: 'Bitcoin',
+          ticker: 'BTC',
+          network: 'Bitcoin network',
+          color: '#f7931a',
+          amount: total > 0 ? (total / 95000).toFixed(6) : '0.000000',
+          address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+        },
+        {
+          id: 'eth',
+          name: 'Ethereum',
+          ticker: 'ETH',
+          network: 'Ethereum (ERC-20)',
+          color: '#627eea',
+          amount: total > 0 ? (total / 3200).toFixed(5) : '0.00000',
+          address: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
+        },
+        {
+          id: 'usdt',
+          name: 'Tether',
+          ticker: 'USDT',
+          network: 'TRC-20 (Tron)',
+          color: '#26a17b',
+          amount: total.toFixed(2),
+          address: 'TXyzPickupTrackPortWallet7kQm9sR2nP4vL'
+        },
+        {
+          id: 'usdc',
+          name: 'USD Coin',
+          ticker: 'USDC',
+          network: 'Ethereum (ERC-20)',
+          color: '#2775ca',
+          amount: total.toFixed(2),
+          address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+        }
+      ];
+    }
+    function pickupFeeBreakdown(record){
+      const shipping = record.shipping || {};
+      const currency = record.currency || 'USD';
+      const sym = currency==='USD'?'$':currency==='GBP'?'£':currency==='EUR'?'€':currency+' ';
+      let delivery = shipping.fee != null ? Number(shipping.fee) : (record.fee != null ? Number(record.fee) : null);
+      if(delivery == null || isNaN(delivery)){
+        const method = String(shipping.method || record.method || 'Standard').toLowerCase();
+        delivery = method.includes('express') ? 24.90 : method.includes('priority') ? 18.50 : 12.90;
+      }
+      const handling = Math.round(delivery * 0.12 * 100) / 100;
+      const storage = 2.50;
+      const total = Math.round((delivery + handling + storage) * 100) / 100;
+      return { currency, sym, delivery, handling, storage, total };
+    }
+    function pickupPage(record){
+      const shipping = record.shipping || {};
+      const sender = record.sender || {};
+      const recipient = record.recipient || {};
+      const tn = record.trackingNumber || '';
+      const status = record.status || 'Out for Delivery';
+      const carrier = shipping.carrier || record.carrier || 'TrackPort Logistics';
+      const method = shipping.method || record.method || 'Standard';
+      const weight = shipping.weight != null ? shipping.weight : record.weight;
+      const dims = shipping.dimensions || record.dimensions || '';
+      const product = record.productName || 'Package';
+      const productImage = record.productImage || record.image || record.photo || record.imageUrl || record.productPhoto || record.thumbnail || record.picture || '';
+      const qty = record.quantity || 1;
+      const category = record.category || '';
+      const pkgType = shipping.packageType || record.packageType || '';
+      const origin = sender.city || record.origin || '—';
+      const dest = recipient.city || record.destination || '—';
+      const originCountry = sender.country || '';
+      const destCountry = recipient.country || '';
+      const fees = pickupFeeBreakdown(record);
+      const cryptos = pickupCryptoMethods(fees.total);
+      const photo = productImage
+        ? `<img src="${esc(productImage)}" alt="${esc(product)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'fallback\\'>📦</div>'">`
+        : `<div class="fallback">📦</div>`;
+      const cryptoBtns = cryptos.map((c,i)=>`
+        <button type="button" class="pu-crypto${i===0?' is-selected':''}" data-pu-crypto="${esc(c.id)}" data-address="${esc(c.address)}" data-amount="${esc(c.amount)}" data-ticker="${esc(c.ticker)}" data-network="${esc(c.network)}">
+          <span class="pu-crypto-icon" style="background:${esc(c.color)}">${esc(c.ticker.slice(0,1))}</span>
+          <span style="flex:1;min-width:0">
+            <strong>${esc(c.name)}</strong>
+            <span>${esc(c.network)} · ${esc(c.amount)} ${esc(c.ticker)}</span>
+          </span>
+        </button>`).join('');
+      const first = cryptos[0];
+      return `
+      <div class="pu-shell">
+        <a class="pu-back" href="#/track/${encodeURIComponent(tn)}">← Back to tracking</a>
+        <div class="pu-banner">
+          <div class="eyebrow">TrackPort pickup desk</div>
+          <h1>Collect your package</h1>
+          <p>Confirm package details and settle the delivery balance with crypto to release your shipment for handoff.</p>
+          <div class="pu-secure">🔒 Encrypted checkout · Pickup release after payment confirmation</div>
+        </div>
+        <div class="pu-grid">
+          <div class="pu-card">
+            <div class="pu-card-head">
+              <h2>Package information</h2>
+              <span class="pu-status-pill">${esc(status)}</span>
+            </div>
+            <div class="pu-card-body">
+              <div class="pu-photo">${photo}</div>
+              <h3 class="pu-title">${esc(product)}</h3>
+              <p class="pu-sub">${esc(category || 'Shipment')}${qty ? ' · Qty ' + esc(String(qty)) : ''}${pkgType ? ' · ' + esc(pkgType) : ''}</p>
+              <div class="pu-kv">
+                <div><div class="k">Tracking number</div><div class="v pu-tn">${esc(tn)}</div></div>
+                <div><div class="k">Carrier</div><div class="v">${esc(carrier)}</div></div>
+                <div><div class="k">Service</div><div class="v">${esc(method)}</div></div>
+                <div><div class="k">Weight</div><div class="v">${weight != null ? esc(String(weight)) + ' kg' : '—'}</div></div>
+                <div><div class="k">Dimensions</div><div class="v">${esc(dims || '—')}</div></div>
+                <div><div class="k">Route</div><div class="v">${esc(origin)}${originCountry ? ', ' + esc(originCountry) : ''} → ${esc(dest)}${destCountry ? ', ' + esc(destCountry) : ''}</div></div>
+                <div><div class="k">Sender</div><div class="v">${esc(sender.fullName || sender.name || '—')}</div></div>
+                <div><div class="k">Recipient</div><div class="v">${esc(recipient.fullName || recipient.name || '—')}</div></div>
+                <div><div class="k">Pickup location</div><div class="v">${esc(record.currentLocation || dest || 'TrackPort pickup point')}</div></div>
+                <div><div class="k">Hold window</div><div class="v">48 hours after payment</div></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="pu-card">
+              <div class="pu-card-head"><h2>Charges due</h2></div>
+              <div class="pu-card-body">
+                <table class="pu-fee-table">
+                  <tr class="muted-row"><td>Delivery fee</td><td>${fees.sym}${fees.delivery.toFixed(2)}</td></tr>
+                  <tr class="muted-row"><td>Handling</td><td>${fees.sym}${fees.handling.toFixed(2)}</td></tr>
+                  <tr class="muted-row"><td>Pickup storage</td><td>${fees.sym}${fees.storage.toFixed(2)}</td></tr>
+                  <tr><td>Total due</td><td>${fees.sym}${fees.total.toFixed(2)} ${esc(fees.currency)}</td></tr>
+                </table>
+                <p class="pu-note">Pay the total in cryptocurrency to unlock package release at the pickup desk.</p>
+              </div>
+            </div>
+            <div class="pu-card">
+              <div class="pu-card-head"><h2>Pay with crypto</h2></div>
+              <div class="pu-card-body">
+                <div class="pu-crypto-list" id="pu-crypto-list">
+                  ${cryptoBtns}
+                </div>
+                <div class="pu-pay-panel" id="pu-pay-panel">
+                  <div class="lbl">Send exactly</div>
+                  <div style="font-size:22px;font-weight:800;letter-spacing:-.03em;margin-bottom:12px" id="pu-amount-label">${esc(first.amount)} ${esc(first.ticker)}</div>
+                  <div class="lbl">Network</div>
+                  <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="pu-network-label">${esc(first.network)}</div>
+                  <div class="lbl">Deposit address</div>
+                  <div class="pu-addr" id="pu-address">${esc(first.address)}</div>
+                  <div class="pu-actions">
+                    <button type="button" class="btn btn-soft" id="pu-copy-addr">Copy address</button>
+                    <button type="button" class="btn btn-accent" id="pu-confirm-pay">I have paid — release package</button>
+                  </div>
+                  <div class="pu-success" id="pu-success">Payment marked as submitted. Show this confirmation and your tracking number at the TrackPort pickup desk to collect your package.</div>
+                  <p class="pu-note">Only send the selected asset on the matching network. Wrong-network transfers cannot be recovered.</p>
+                </div>
+              </div>
+            </div>
+            <div class="pu-card">
+              <div class="pu-card-head"><h2>How pickup works</h2></div>
+              <div class="pu-card-body">
+                <ol class="pu-steps">
+                  <li><span class="n">1</span><span><strong>Select crypto</strong> and send the exact amount shown.</span></li>
+                  <li><span class="n">2</span><span><strong>Confirm payment</strong> on this page after your transfer is sent.</span></li>
+                  <li><span class="n">3</span><span><strong>Collect in person</strong> with a valid ID and tracking number ${esc(tn)}.</span></li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+    function wirePickupPage(){
+      const list = document.getElementById('pu-crypto-list');
+      if(!list || list.dataset.wired) return;
+      list.dataset.wired = '1';
+      const amountEl = document.getElementById('pu-amount-label');
+      const networkEl = document.getElementById('pu-network-label');
+      const addrEl = document.getElementById('pu-address');
+      const success = document.getElementById('pu-success');
+      list.querySelectorAll('[data-pu-crypto]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          list.querySelectorAll('[data-pu-crypto]').forEach(b=>b.classList.remove('is-selected'));
+          btn.classList.add('is-selected');
+          if(amountEl) amountEl.textContent = (btn.getAttribute('data-amount') || '') + ' ' + (btn.getAttribute('data-ticker') || '');
+          if(networkEl) networkEl.textContent = btn.getAttribute('data-network') || '';
+          if(addrEl) addrEl.textContent = btn.getAttribute('data-address') || '';
+          if(success) success.classList.remove('on');
+        });
+      });
+      const copyBtn = document.getElementById('pu-copy-addr');
+      if(copyBtn){
+        copyBtn.addEventListener('click', ()=>{
+          const val = addrEl ? addrEl.textContent : '';
+          if(!val) return;
+          if(navigator.clipboard && navigator.clipboard.writeText){
+            navigator.clipboard.writeText(val).then(()=>{ if(window.showToast) showToast('Address copied'); }).catch(()=>{});
+          }
+        });
+      }
+      const confirmBtn = document.getElementById('pu-confirm-pay');
+      if(confirmBtn){
+        confirmBtn.addEventListener('click', ()=>{
+          if(success) success.classList.add('on');
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = 'Release requested';
+          if(window.showToast) showToast('Pickup release submitted');
+        });
+      }
+    }
+
     function searchPage(message=''){
       return `<div class="landing-page">${heroSection()}<div class="landing-main">${searchPanel(message)}
       <section class="content-section" id="services">
@@ -1663,11 +2025,26 @@
     function errorPage(message){
       return `<div class="landing-page">${heroSection()}<div class="landing-main result-page"><div class="error-box result-summary"><section class="card"><div style="color:var(--error)">${icon('alert-triangle')}</div><h2>Tracking temporarily unavailable</h2><p>${esc(message)}</p></section></div>${searchPanel('', '', false)}</div></div>`;
     }
+    function routeMode(){
+      const h = String(location.hash || '').replace(/^#\/?/, '');
+      if(/^pickup\//i.test(h) || /^pick-up\//i.test(h)) return 'pickup';
+      if(/^track\//i.test(h) || h === 'track' || h === 'tracking-search' || !h) return 'track';
+      return 'track';
+    }
     function trackingCode(){
       const query = new URLSearchParams(location.search).get('tracking');
       if(query) return query.trim().toUpperCase();
-      const hash = location.hash.replace(/^#\/?track\/?/,'').split('/')[0];
-      return decodeURIComponent(hash || '').trim().toUpperCase();
+      const raw = String(location.hash || '').replace(/^#\/?/, '');
+      let rest = raw;
+      if(/^pickup\//i.test(raw) || /^pick-up\//i.test(raw)){
+        rest = raw.replace(/^pick-?up\//i, '');
+      } else if(/^track\//i.test(raw)){
+        rest = raw.replace(/^track\//i, '');
+      } else if(raw === 'tracking-search' || raw === 'track' || raw === 'pickup' || raw === 'pick-up'){
+        rest = '';
+      }
+      const code = rest.split('/')[0];
+      return decodeURIComponent(code || '').trim().toUpperCase();
     }
     function recordFor(code){
       if(!code) return {record:null,type:null};
@@ -1697,11 +2074,22 @@
           result = {record:null,type:null};
         }
       }
+      const mode = (typeof routeMode === 'function') ? routeMode() : 'track';
       let html;
       if(!code){
-        html = searchPage(message);
+        html = mode === 'pickup'
+          ? errorPage('Enter a tracking number in the pickup link, for example #/pickup/SHP-2026-XXXX.')
+          : searchPage(message);
       } else if(result.record){
-        html = result.type === 'flight' ? flightPage(result.record) : shipmentPage(result.record);
+        if(mode === 'pickup'){
+          if(result.type === 'flight'){
+            html = errorPage('Pickup desk is for package shipments only. This code is a flight booking.');
+          } else {
+            html = pickupPage(result.record);
+          }
+        } else {
+          html = result.type === 'flight' ? flightPage(result.record) : shipmentPage(result.record);
+        }
       } else if(!db){
         html = errorPage('Tracking service is starting up. Please wait a second and search again.');
       } else {
@@ -1709,6 +2097,7 @@
       }
       $('#app').innerHTML = html;
       renderIcons(); wireMaps(); wireLiveMapLinks(); wireSearch(); wireLanding(); wireStickySearch(); wireTheme(); wireDrawer();
+      try{ if(typeof wirePickupPage === 'function') wirePickupPage(); }catch(_e){}
       try{ if(typeof hidePageLoader==='function') hidePageLoader(); }catch(_e){}
     }
     function applyTheme(theme){
