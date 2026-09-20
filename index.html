@@ -2025,39 +2025,66 @@
     function errorPage(message){
       return `<div class="landing-page">${heroSection()}<div class="landing-main result-page"><div class="error-box result-summary"><section class="card"><div style="color:var(--error)">${icon('alert-triangle')}</div><h2>Tracking temporarily unavailable</h2><p>${esc(message)}</p></section></div>${searchPanel('', '', false)}</div></div>`;
     }
+    /* ===== Robust hash/path router (pickup + track) ===== */
+    const TP_RESERVED_TOKENS = ['','#','/','track','tracking','tracking-search','pickup','pick-up','pickupdesk','pickup-desk','services','carriers','why-trackport','home','top','contact','faq'];
+    function tpCleanHash(){
+      // Handles "#/pickup/X", "#pickup/X", "##/pickup/X", "#!/pickup/X", "%23/pickup/X"
+      let h = String(location.hash || '');
+      try{ h = decodeURIComponent(h); }catch(_e){}
+      h = h.replace(/^[#!\/]+/, '').replace(/[#!]+$/, '').trim();
+      return h;
+    }
+    function tpPathSegments(){
+      let p = String(location.pathname || '');
+      try{ p = decodeURIComponent(p); }catch(_e){}
+      return p.split('/').filter(Boolean);
+    }
+    function tpIsTrackingToken(token){
+      const t = String(token || '').trim();
+      if(!t) return false;
+      if(TP_RESERVED_TOKENS.indexOf(t.toLowerCase()) !== -1) return false;
+      if(!/[0-9]/.test(t)) return false;              // real tracking numbers always contain digits
+      return /^[A-Za-z0-9][A-Za-z0-9._\-]{3,}$/.test(t);
+    }
+    function tpTokens(){
+      const hashTokens = tpCleanHash().split('?')[0].split('/').filter(Boolean);
+      return hashTokens.length ? hashTokens : tpPathSegments();
+    }
+    function tpIsPickupToken(token){
+      return /^pick-?up(-?desk)?$/i.test(String(token || '').trim());
+    }
     function routeMode(){
       try{
         const params = new URLSearchParams(location.search || '');
         if(String(params.get('mode') || '').toLowerCase() === 'pickup') return 'pickup';
         if(params.get('pickup')) return 'pickup';
       }catch(_e){}
-      const h = String(location.hash || '').replace(/^#\/?/, '').trim();
-      if(/^pick-?up(\/|$|\?)/i.test(h)) return 'pickup';
-      if(/\bpickup\b/i.test(h) && !/^track\//i.test(h)) return 'pickup';
+      const tokens = tpTokens();
+      if(tokens.some(tpIsPickupToken)) return 'pickup';
+      const hash = tpCleanHash();
+      if(/\bpick-?up\b/i.test(hash) && !/^track(ing)?\//i.test(hash)) return 'pickup';
       return 'track';
     }
     function trackingCode(){
       try{
         const params = new URLSearchParams(location.search || '');
         const fromQuery = params.get('tracking') || params.get('tn') || params.get('pickup') || params.get('code');
-        if(fromQuery) return String(fromQuery).trim().toUpperCase();
+        if(fromQuery && tpIsTrackingToken(fromQuery)) return String(fromQuery).trim().toUpperCase();
       }catch(_e){}
-      let raw = String(location.hash || '').replace(/^#\/?/, '').trim();
-      // strip query-like suffixes in hash
-      raw = raw.split('?')[0];
-      let rest = raw;
-      if(/^pick-?up\//i.test(raw)){
-        rest = raw.replace(/^pick-?up\//i, '');
-      } else if(/^pick-?up$/i.test(raw)){
-        rest = '';
-      } else if(/^track\//i.test(raw)){
-        rest = raw.replace(/^track\//i, '');
-      } else if(/^(tracking-search|track)$/i.test(raw)){
-        rest = '';
+      // tracking code inside the hash query, e.g. "#/pickup?tn=SHP-..."
+      try{
+        const hashQuery = tpCleanHash().split('?')[1];
+        if(hashQuery){
+          const hp = new URLSearchParams(hashQuery);
+          const v = hp.get('tracking') || hp.get('tn') || hp.get('pickup') || hp.get('code');
+          if(v && tpIsTrackingToken(v)) return String(v).trim().toUpperCase();
+        }
+      }catch(_e){}
+      const tokens = tpTokens();
+      for(const token of tokens){
+        if(tpIsTrackingToken(token)) return String(token).trim().toUpperCase();
       }
-      const code = rest.split('/').filter(Boolean)[0] || '';
-      try{ return decodeURIComponent(code).trim().toUpperCase(); }
-      catch(_e){ return String(code).trim().toUpperCase(); }
+      return '';
     }
     function pickupSearchPage(message){
       return `<div class="pu-shell">
@@ -2108,12 +2135,16 @@
       let result = recordFor(code);
       let fetchError = null;
       if(code && !result.record){
-        try{
-          result = (await fetchRecordByNumber(code)) || {record:null,type:null};
-        }catch(err){
-          console.warn('[TrackPort] fetch failed', err);
-          fetchError = err;
-          result = {record:null,type:null};
+        for(let attempt = 0; attempt < 3 && !result.record; attempt++){
+          try{
+            if(typeof ensureDb === 'function') await ensureDb(4000);
+            result = (await fetchRecordByNumber(code)) || {record:null,type:null};
+          }catch(err){
+            console.warn('[TrackPort] fetch failed', err);
+            fetchError = err;
+            result = {record:null,type:null};
+          }
+          if(!result.record) await new Promise(r=>setTimeout(r, 450));
         }
       }
       const mode = (typeof routeMode === 'function') ? routeMode() : 'track';
@@ -2418,13 +2449,19 @@
       const attach = (key, setter) => db.collection('nbatoolsState').doc(key).onSnapshot(snapshot=>{
         try{ setter(snapshot.exists ? normalizeRecords(snapshot.data()?.value) : {}); }
         catch(e){ console.warn(e); setter({}); }
-        if(trackingCode()) render();
+        render();
       }, error=>{ console.warn(`Could not read ${key}`,error); });
       listeners.push(attach('shared:nbatools-shipments', value=>shipments=value));
       listeners.push(attach('shared:nbatools-flights', value=>flights=value));
-      if(trackingCode()) setTimeout(()=>{ try{ render(); }catch(_e){} }, 250);
+      setTimeout(()=>{ try{ render(); }catch(_e){} }, 250);
     }
-    window.addEventListener('hashchange', ()=>render());
+    let tpLastRouteKey = null;
+    window.addEventListener('hashchange', ()=>{
+      const key = routeMode() + '|' + trackingCode();
+      if(key === tpLastRouteKey) return;   // plain #section anchors keep scrolling, no re-render
+      tpLastRouteKey = key;
+      render();
+    });
     
     
 
@@ -2522,6 +2559,7 @@
       wireDrawer();
       try{ listen(); }catch(e){ console.warn('[TrackPort] listen', e); }
       try{ if(typeof ensureDb === 'function') await ensureDb(2500); }catch(_e){}
+      try{ tpLastRouteKey = routeMode() + '|' + trackingCode(); }catch(_e){}
       try{ await render(); }catch(e){ console.warn('[TrackPort] render', e); }
       renderIcons();
     });
