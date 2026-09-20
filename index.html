@@ -2026,25 +2026,67 @@
       return `<div class="landing-page">${heroSection()}<div class="landing-main result-page"><div class="error-box result-summary"><section class="card"><div style="color:var(--error)">${icon('alert-triangle')}</div><h2>Tracking temporarily unavailable</h2><p>${esc(message)}</p></section></div>${searchPanel('', '', false)}</div></div>`;
     }
     function routeMode(){
-      const h = String(location.hash || '').replace(/^#\/?/, '');
-      if(/^pickup\//i.test(h) || /^pick-up\//i.test(h)) return 'pickup';
-      if(/^track\//i.test(h) || h === 'track' || h === 'tracking-search' || !h) return 'track';
+      try{
+        const params = new URLSearchParams(location.search || '');
+        if(String(params.get('mode') || '').toLowerCase() === 'pickup') return 'pickup';
+        if(params.get('pickup')) return 'pickup';
+      }catch(_e){}
+      const h = String(location.hash || '').replace(/^#\/?/, '').trim();
+      if(/^pick-?up(\/|$|\?)/i.test(h)) return 'pickup';
+      if(/\bpickup\b/i.test(h) && !/^track\//i.test(h)) return 'pickup';
       return 'track';
     }
     function trackingCode(){
-      const query = new URLSearchParams(location.search).get('tracking');
-      if(query) return query.trim().toUpperCase();
-      const raw = String(location.hash || '').replace(/^#\/?/, '');
+      try{
+        const params = new URLSearchParams(location.search || '');
+        const fromQuery = params.get('tracking') || params.get('tn') || params.get('pickup') || params.get('code');
+        if(fromQuery) return String(fromQuery).trim().toUpperCase();
+      }catch(_e){}
+      let raw = String(location.hash || '').replace(/^#\/?/, '').trim();
+      // strip query-like suffixes in hash
+      raw = raw.split('?')[0];
       let rest = raw;
-      if(/^pickup\//i.test(raw) || /^pick-up\//i.test(raw)){
+      if(/^pick-?up\//i.test(raw)){
         rest = raw.replace(/^pick-?up\//i, '');
+      } else if(/^pick-?up$/i.test(raw)){
+        rest = '';
       } else if(/^track\//i.test(raw)){
         rest = raw.replace(/^track\//i, '');
-      } else if(raw === 'tracking-search' || raw === 'track' || raw === 'pickup' || raw === 'pick-up'){
+      } else if(/^(tracking-search|track)$/i.test(raw)){
         rest = '';
       }
-      const code = rest.split('/')[0];
-      return decodeURIComponent(code || '').trim().toUpperCase();
+      const code = rest.split('/').filter(Boolean)[0] || '';
+      try{ return decodeURIComponent(code).trim().toUpperCase(); }
+      catch(_e){ return String(code).trim().toUpperCase(); }
+    }
+    function pickupSearchPage(message){
+      return `<div class="pu-shell">
+        <div class="pu-banner">
+          <div class="eyebrow">TrackPort pickup desk</div>
+          <h1>Collect your package</h1>
+          <p>Enter your tracking number to open the pickup desk, review package details, and pay delivery fees with crypto.</p>
+          <div class="pu-secure">🔒 Secure pickup release</div>
+        </div>
+        <div class="card pad" style="max-width:520px;margin:0 auto">
+          <form id="pickup-search-form" class="search-form" style="display:flex;gap:8px;flex-wrap:wrap">
+            <input id="pickup-search-input" class="mono" placeholder="SHP-2026-XXXX" autocomplete="off" aria-label="Tracking number" style="flex:1;min-width:180px">
+            <button class="btn btn-accent" type="submit">Open pickup</button>
+          </form>
+          ${message ? `<p style="color:var(--error);margin:14px 0 0;font-size:13px">${esc(message)}</p>` : ''}
+          <p class="muted" style="margin:14px 0 0;font-size:12px;line-height:1.5">Direct link format: <span class="mono">#/pickup/YOUR-TRACKING-NUMBER</span></p>
+        </div>
+      </div>`;
+    }
+    function wirePickupSearch(){
+      const form = document.getElementById('pickup-search-form');
+      if(!form || form.dataset.wired) return;
+      form.dataset.wired = '1';
+      form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        const code = String((document.getElementById('pickup-search-input') || {}).value || '').trim().toUpperCase();
+        if(!code) return;
+        location.hash = '#/pickup/' + encodeURIComponent(code);
+      });
     }
     function recordFor(code){
       if(!code) return {record:null,type:null};
@@ -2078,12 +2120,12 @@
       let html;
       if(!code){
         html = mode === 'pickup'
-          ? errorPage('Enter a tracking number in the pickup link, for example #/pickup/SHP-2026-XXXX.')
+          ? pickupSearchPage(message || '')
           : searchPage(message);
       } else if(result.record){
         if(mode === 'pickup'){
           if(result.type === 'flight'){
-            html = errorPage('Pickup desk is for package shipments only. This code is a flight booking.');
+            html = pickupSearchPage('Pickup desk is for package shipments only. This code is a flight booking.');
           } else {
             html = pickupPage(result.record);
           }
@@ -2091,13 +2133,18 @@
           html = result.type === 'flight' ? flightPage(result.record) : shipmentPage(result.record);
         }
       } else if(!db){
-        html = errorPage('Tracking service is starting up. Please wait a second and search again.');
+        html = mode === 'pickup'
+          ? pickupSearchPage('Connecting to TrackPort… try again in a moment.')
+          : errorPage('Tracking service is starting up. Please wait a second and search again.');
       } else {
-        html = errorPage(`We couldn't find a shipment or flight with tracking number ${code}. If you just created it in TrackPort, make sure you were signed in so it could sync to the cloud.`);
+        html = mode === 'pickup'
+          ? pickupSearchPage('No package found for '+code+'. Check the tracking number or create the shipment while signed in so it syncs to the cloud.')
+          : errorPage(`We couldn't find a shipment or flight with tracking number ${code}. If you just created it in TrackPort, make sure you were signed in so it could sync to the cloud.`);
       }
       $('#app').innerHTML = html;
       renderIcons(); wireMaps(); wireLiveMapLinks(); wireSearch(); wireLanding(); wireStickySearch(); wireTheme(); wireDrawer();
       try{ if(typeof wirePickupPage === 'function') wirePickupPage(); }catch(_e){}
+      try{ if(typeof wirePickupSearch === 'function') wirePickupSearch(); }catch(_e){}
       try{ if(typeof hidePageLoader==='function') hidePageLoader(); }catch(_e){}
     }
     function applyTheme(theme){
