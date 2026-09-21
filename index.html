@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -521,12 +522,13 @@
     .trk-head .trk-sub{color:var(--muted);font-size:14px;margin:0;line-height:1.45}
     .trk-actions{display:flex;flex-wrap:wrap;gap:8px}
     .trk-product-hero{
-      display:flex;align-items:flex-start;gap:16px;min-width:0;flex:1;
+      display:block;min-width:0;flex:1;
     }
     .trk-product-img,.trk-product-fallback{
-      width:88px;height:88px;border-radius:20px;object-fit:cover;flex:0 0 auto;
+      width:100%;height:360px;border-radius:22px;object-fit:cover;display:block;
       border:1px solid var(--line);background:var(--surface2);
       box-shadow:0 10px 28px color-mix(in srgb,var(--ink) 8%,transparent);
+      margin-bottom:16px;
     }
     .trk-product-fallback{
       display:grid;place-items:center;color:var(--muted);
@@ -547,18 +549,16 @@
     .trk-product-thumb-fallback svg{width:22px;height:22px}
     .trk-product-thumb-meta .name{font-size:15px;font-weight:700;letter-spacing:-.02em}
     .trk-product-thumb-meta .meta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4}
-    @media(max-width:560px){
-      .trk-product-img,.trk-product-fallback{width:72px;height:72px;border-radius:16px}
+    @media(max-width:640px){
+      .trk-page{padding-left:14px;padding-right:14px}
+      .trk-product-img,.trk-product-fallback{height:270px;border-radius:18px}
     }
     .trk-status-banner{
       display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
       background:var(--dark);color:#fff;border-radius:24px;padding:22px 24px;margin-bottom:18px;
       position:relative;overflow:hidden;
     }
-    .trk-status-banner:after{
-      content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;
-      border:1px solid rgba(255,255,255,.08);box-shadow:0 0 0 40px rgba(255,255,255,.03);
-    }
+
     .trk-status-banner .trk-status-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px}
     .trk-status-banner .trk-status-name{font-size:clamp(24px,4vw,32px);font-weight:800;letter-spacing:-.04em;margin:0 0 8px}
     .trk-status-banner .trk-status-meta{font-size:14px;color:rgba(255,255,255,.65);line-height:1.45}
@@ -591,34 +591,29 @@
     .trk-card-head h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.02em}
     .trk-card-head .side{font-size:12px;color:var(--muted);font-weight:600}
     .trk-card-body{padding:18px 20px}
-    .trk-progress{
-      display:flex;justify-content:space-between;position:relative;padding:8px 4px 4px;margin-bottom:4px;
-    }
-    .trk-progress:before{
-      content:"";position:absolute;top:18px;left:12%;right:12%;height:3px;background:var(--line);border-radius:2px;
-    }
-    .trk-progress .trk-fill{
-      position:absolute;top:18px;left:12%;height:3px;background:var(--accent);border-radius:2px;z-index:0;
-      transition:width .4s var(--ease-smooth);
-    }
-    .trk-prog-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;z-index:1;min-width:0}
-    .trk-prog-dot{
-      width:22px;height:22px;border-radius:50%;background:var(--surface2);border:2px solid var(--line);
-      display:grid;place-items:center;font-size:10px;
-    }
+    .trk-progress{position:relative;display:flex;flex-direction:column;gap:0;padding:4px 0 4px 2px;margin:0}
+    .trk-progress:before{content:"";position:absolute;left:11px;top:16px;bottom:16px;width:2px;background:var(--line);border-radius:2px}
+    .trk-progress .trk-fill{position:absolute;left:11px;top:16px;width:2px!important;height:var(--fill-height,0%);background:var(--accent);border-radius:2px;z-index:0;transition:height .4s var(--ease-smooth)}
+    .trk-prog-step{display:grid;grid-template-columns:24px 1fr;align-items:center;gap:13px;position:relative;z-index:1;min-width:0;min-height:58px}
+    .trk-prog-dot{width:22px;height:22px;border-radius:50%;background:var(--surface2);border:2px solid var(--line);display:grid;place-items:center;font-size:10px}
     .trk-prog-step.complete .trk-prog-dot{background:var(--accent);border-color:var(--accent);color:#0a100b}
     .trk-prog-step.active .trk-prog-dot{background:var(--ink);border-color:var(--ink);color:var(--bg);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 35%,transparent)}
-    .trk-prog-step span{font-size:10px;font-weight:700;color:var(--muted);text-align:center;line-height:1.25;max-width:72px}
+    .trk-prog-step span{font-size:12px;font-weight:700;color:var(--muted);text-align:left;line-height:1.25;max-width:none}
     .trk-prog-step.complete span,.trk-prog-step.active span{color:var(--ink)}
-    @media(max-width:640px){
-      .trk-prog-step span{font-size:9px;max-width:56px}
-      .trk-progress:before,.trk-progress .trk-fill{left:8%;right:8%}
-      .trk-progress .trk-fill{left:8%}
-    }
     .trk-kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
     @media(max-width:520px){.trk-kv{grid-template-columns:1fr}}
     .trk-kv .k{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
     .trk-kv .v{font-size:14px;font-weight:600;letter-spacing:-.015em;word-break:break-word}
+    .trk-receipt-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .trk-receipt-modal{position:fixed;inset:0;background:rgba(7,10,8,.72);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:center;justify-content:center;padding:18px}
+    .trk-receipt-modal.open{display:flex}
+    .trk-receipt-dialog{width:min(680px,100%);max-height:92vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.28)}
+    .trk-receipt-toolbar{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:2}
+    .trk-receipt-paper{margin:20px;background:#fff;color:#111;border:1px solid #dfe3df;border-radius:16px;padding:28px;box-shadow:0 10px 25px rgba(0,0,0,.07)}
+    .receipt-brand{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:16px}
+    .receipt-brand h2{margin:0;font-size:20px;letter-spacing:-.04em}.receipt-kicker{font-size:9px;text-transform:uppercase;letter-spacing:1.3px;color:#777;font-weight:800}
+    .receipt-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e3e6e3;padding:12px 0;gap:16px}.receipt-row:last-child{border-bottom:0}.receipt-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#777;font-weight:800}.receipt-value{font-size:12px;font-weight:700;margin-top:4px;line-height:1.4}
+    @media(max-width:560px){.trk-receipt-paper{margin:12px;padding:20px}.receipt-row{grid-template-columns:1fr}.trk-receipt-dialog{border-radius:18px}}
     .trk-party{
       display:grid;grid-template-columns:1fr 1fr;gap:14px;
     }
@@ -1491,7 +1486,7 @@
       return `<section class="trk-card">
         <div class="trk-card-head"><h3>${type === 'shipment' ? 'Delivery progress' : 'Flight progress'}</h3><span class="side">Live status</span></div>
         <div class="trk-card-body">
-          <div class="trk-progress"><div class="trk-fill" style="width:${fill}%"></div>${steps}</div>
+          <div class="trk-progress" style="--fill-height:${index===0?'0':((index/(flow.length-1))*100)+'%'}"><div class="trk-fill"></div>${steps}</div>
           ${exception}
         </div>
         <div class="trk-card-head" style="border-top:1px solid var(--line)"><h3>${type === 'shipment' ? 'Tracking history' : 'Flight history'}</h3><span class="side">${events.length} update${events.length===1?'':'s'}</span></div>
@@ -1643,8 +1638,57 @@
           </div>
         </div>
 
+        <section class="trk-card" style="margin-bottom:18px">
+          <div class="trk-card-head"><h3>Shipment receipt</h3><span class="side">Available for download</span></div>
+          <div class="trk-card-body">
+            <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.5">View a clean receipt for this shipment or download it directly. The receipt opens here and does not send you back to the main app.</p>
+            <div class="trk-receipt-actions">
+              <button type="button" class="btn btn-primary" onclick="openTrackingReceipt(${JSON.stringify(tn)})">${icon('eye')} View receipt</button>
+              <button type="button" class="btn btn-ghost" onclick="downloadTrackingReceipt(${JSON.stringify(tn)})">${icon('download')} Download receipt</button>
+            </div>
+          </div>
+        </section>
         <div class="trk-search-again">${searchPanel('', tn, false)}</div>
       </div>`;
+    }
+    function trackingReceiptMarkup(s){
+      const shipping=s.shipping||{}, sender=s.sender||{}, recipient=s.recipient||{};
+      const carrier=shipping.carrier||s.carrier||'Carrier';
+      const fee=shipping.fee!=null?shipping.fee:s.fee; const currency=s.currency||'USD';
+      const sym=currency==='USD'?'$':currency==='GBP'?'£':currency==='EUR'?'€':currency+' ';
+      const img=s.productImage||s.image||s.photo||s.imageUrl||s.productPhoto||s.thumbnail||s.picture||'';
+      return `<div class="trk-receipt-modal" id="trk-receipt-modal" onclick="if(event.target===this)closeTrackingReceipt()">
+        <div class="trk-receipt-dialog">
+          <div class="trk-receipt-toolbar"><strong style="font-size:13px">Shipment receipt</strong><div style="display:flex;gap:7px"><button class="btn btn-ghost btn-sm" onclick="downloadTrackingReceipt('${esc(s.trackingNumber||'')}')">${icon('download')} Download</button><button class="btn btn-primary btn-sm" onclick="closeTrackingReceipt()">Close</button></div></div>
+          <div class="trk-receipt-paper" id="trk-receipt-paper">
+            <div class="receipt-brand"><div><div class="receipt-kicker">Shipping receipt</div><h2>${esc(carrier)}</h2></div><div style="text-align:right"><div class="receipt-kicker">Tracking</div><strong class="mono">${esc(s.trackingNumber||'—')}</strong></div></div>
+            ${img?`<img src="${esc(img)}" alt="${esc(s.productName||'Package')}" style="width:100%;height:190px;object-fit:cover;border-radius:12px;margin:18px 0;border:1px solid #e2e5e2">`:''}
+            <div class="receipt-row"><div><div class="receipt-label">Sender</div><div class="receipt-value">${esc(sender.fullName||sender.name||'—')}</div></div><div><div class="receipt-label">Recipient</div><div class="receipt-value">${esc(recipient.fullName||recipient.name||'—')}</div></div></div>
+            <div class="receipt-row"><div><div class="receipt-label">Package</div><div class="receipt-value">${esc(s.productName||'Shipment')}</div></div><div><div class="receipt-label">Status</div><div class="receipt-value">${esc(s.status||'Order Created')}</div></div></div>
+            <div class="receipt-row"><div><div class="receipt-label">Origin</div><div class="receipt-value">${esc(sender.city||s.origin||'—')}</div></div><div><div class="receipt-label">Destination</div><div class="receipt-value">${esc(recipient.city||s.destination||'—')}</div></div></div>
+            <div class="receipt-row"><div><div class="receipt-label">Service</div><div class="receipt-value">${esc(shipping.method||s.method||'Standard')}</div></div><div><div class="receipt-label">Shipping fee</div><div class="receipt-value">${fee!=null?sym+Number(fee).toFixed(2)+' '+esc(currency):'—'}</div></div></div>
+            <div style="margin-top:18px;padding-top:14px;border-top:2px solid #111;font-size:9px;color:#777;line-height:1.5">TrackPort shipment receipt · Keep this receipt for your records.</div>
+          </div>
+        </div></div>`;
+    }
+    function openTrackingReceipt(tn){
+      const s=findRecord(tn); if(!s || s.trackingNumber?.startsWith('FLT-')) return toast ? toast('Shipment receipt unavailable') : alert('Shipment receipt unavailable');
+      const old=document.getElementById('trk-receipt-modal'); if(old) old.remove();
+      document.body.insertAdjacentHTML('beforeend',trackingReceiptMarkup(s));
+      requestAnimationFrame(()=>document.getElementById('trk-receipt-modal')?.classList.add('open'));
+    }
+    function closeTrackingReceipt(){document.getElementById('trk-receipt-modal')?.remove()}
+    async function downloadTrackingReceipt(tn){
+      const s=findRecord(tn); if(!s || s.trackingNumber?.startsWith('FLT-')) return toast ? toast('Shipment receipt unavailable') : alert('Shipment receipt unavailable');
+      if(typeof html2canvas!=='function') return toast ? toast('Receipt download is unavailable right now') : alert('Receipt download is unavailable right now');
+      let modal=document.getElementById('trk-receipt-modal');
+      if(!modal){openTrackingReceipt(tn); await new Promise(r=>setTimeout(r,80)); modal=document.getElementById('trk-receipt-modal');}
+      const paper=document.getElementById('trk-receipt-paper'); if(!paper)return;
+      try{
+        const canvas=await html2canvas(paper,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});
+        const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download='TrackPort-Receipt-'+String(tn||'shipment').replace(/[^a-z0-9_-]/gi,'-')+'.png'; a.click();
+        toast ? toast('Receipt downloaded') : null;
+      }catch(e){ console.warn('[TrackPort] receipt download failed',e); toast ? toast('Could not download receipt') : alert('Could not download receipt'); }
     }
     function airport(value){ const parts = String(value || '—').split(/\s*[·|—-]\s*/).filter(Boolean); return parts.length > 1 ? {code:parts.shift().toUpperCase(),name:parts.join(' ').toUpperCase()} : {code:String(value || '—').toUpperCase(),name:String(value || '—').toUpperCase()}; }
     function flightPage(record){
@@ -1765,6 +1809,16 @@
           </div>
         </div>
 
+        <section class="trk-card" style="margin-bottom:18px">
+          <div class="trk-card-head"><h3>Shipment receipt</h3><span class="side">Available for download</span></div>
+          <div class="trk-card-body">
+            <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.5">View a clean receipt for this shipment or download it directly. The receipt opens here and does not send you back to the main app.</p>
+            <div class="trk-receipt-actions">
+              <button type="button" class="btn btn-primary" onclick="openTrackingReceipt(${JSON.stringify(tn)})">${icon('eye')} View receipt</button>
+              <button type="button" class="btn btn-ghost" onclick="downloadTrackingReceipt(${JSON.stringify(tn)})">${icon('download')} Download receipt</button>
+            </div>
+          </div>
+        </section>
         <div class="trk-search-again">${searchPanel('', tn, false)}</div>
       </div>`;
     }
@@ -2317,7 +2371,7 @@
         [providers.street.label]: street,
         [providers.satellite.label]: satellite,
         [providers.detailed.label]: detailed
-      }, null, { position: 'topright', collapsed: false }).addTo(map);
+      }, null, { position: 'topright', collapsed: true }).addTo(map);
       return { street, satellite, detailed };
     }
     function mapPinIcon(point, isCurrent){
@@ -2373,19 +2427,35 @@
         attachLiveMapLayers(map);
 
         const latlngs = points.map(p => [p.latitude, p.longitude]);
-        if(latlngs.length > 1){
-          // High-contrast casing keeps the shipment route legible on streets and satellite imagery.
-          L.polyline(latlngs, { color: '#ffffff', weight: 10, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map);
-          L.polyline(latlngs, { color: '#102018', weight: 7, opacity: 0.9, lineCap: 'round', lineJoin: 'round' }).addTo(map);
-          L.polyline(latlngs, {
-            color: '#b7f23a',
-            weight: 4,
-            opacity: 1,
-            dashArray: '10 7',
-            lineCap: 'round',
-            lineJoin: 'round'
-          }).addTo(map);
+
+        // Draw a realistic road-following route when coordinates are available.
+        // OSRM is used without an API key; if routing is unavailable, fall back
+        // to the shipment's stored coordinates so the map still renders.
+        async function drawRealRoute(){
+          if(latlngs.length < 2) return;
+          let routeLatLngs = latlngs;
+          try{
+            const coords = points.map(p => `${p.longitude},${p.latitude}`).join(';');
+            const endpoint = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
+            const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const timer = controller ? setTimeout(()=>controller.abort(), 7000) : null;
+            const response = await fetch(endpoint, { signal: controller ? controller.signal : undefined });
+            if(timer) clearTimeout(timer);
+            if(response.ok){
+              const json = await response.json();
+              const geometry = json && json.routes && json.routes[0] && json.routes[0].geometry;
+              if(geometry && Array.isArray(geometry.coordinates) && geometry.coordinates.length > 1){
+                routeLatLngs = geometry.coordinates.map(c => [c[1], c[0]]);
+              }
+            }
+          }catch(_e){}
+          // White casing + dark road edge + TrackPort route line gives the route
+          // enough contrast against real street/satellite tiles.
+          L.polyline(routeLatLngs, { color:'#ffffff', weight:10, opacity:.92, lineCap:'round', lineJoin:'round' }).addTo(map);
+          L.polyline(routeLatLngs, { color:'#162019', weight:7, opacity:.88, lineCap:'round', lineJoin:'round' }).addTo(map);
+          L.polyline(routeLatLngs, { color:'#b7f23a', weight:4, opacity:1, lineCap:'round', lineJoin:'round' }).addTo(map);
         }
+        drawRealRoute();
 
         const layers = points.map((point) => {
           const current = String(point.id) === String(element.dataset.currentId);
