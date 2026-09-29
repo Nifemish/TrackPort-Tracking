@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100;0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;0,9..40,1000;1,9..40,100;1,9..40,200;1,9..40,300;1,9..40,400;1,9..40,500;1,9..40,600;1,9..40,700;1,9..40,800;1,9..40,900;1,9..40,1000&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1094,7 +1096,224 @@
     .pu-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px}
     .pu-back:hover{color:var(--ink)}
 
-  </style>
+  
+
+/* TrackPort read-only shipment receipt */
+
+#dr-stage{background:#e9eaf0;padding:18px;border-radius:16px}
+
+/* ===== TrackPort Delivery Receipt (reference-matched) ===== */
+.dr-stage-wrap{max-width:920px;margin:0 auto;padding-bottom:40px}
+.dr-chrome{
+  background:linear-gradient(165deg,#0b1220 0%,#121a2b 45%,#0e1624 100%);
+  border-radius:0px;padding:28px 28px 32px;margin-bottom:22px;
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+}
+.dr-chrome h1{
+  margin:0 0 8px;font-family:var(--font-main);
+  font-size:clamp(28px,5vw,40px);font-weight:500;letter-spacing:-.02em;color:#f4f1e8;
+}
+.dr-chrome .dr-chrome-sub{margin:0 0 22px;font-size:14px;color:rgba(244,241,232,.55);line-height:1.45}
+.dr-chrome .dr-chrome-sub .mono{color:rgba(244,241,232,.75);font-weight:600}
+.dr-chrome-actions{display:flex;flex-direction:column;gap:12px;max-width:340px}
+.dr-chrome-actions .dr-cta{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  border:1.5px solid var(--accent);background:transparent;color:var(--accent);
+  border-radius:999px;padding:14px 20px;font-size:13px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+  transition:transform .18s ease,background .18s ease,color .18s ease,box-shadow .18s ease;
+  text-decoration:none;font-family:var(--font-main);
+}
+.dr-chrome-actions .dr-cta:hover{
+  background:var(--accent);color:#FFFFFF;
+  transform:translateY(-3px);box-shadow:0 10px 28px rgba(26,34,51,.25);
+}
+.dr-chrome-actions .dr-cta.primary{
+  background:var(--accent);color:#FFFFFF;
+  box-shadow:0 10px 28px rgba(26,34,51,.22);
+}
+.dr-chrome-actions .dr-cta.primary:hover{filter:brightness(1.05)}
+
+.dr-doc{
+  --dr-navy:#1a2b4a;
+  --dr-navy2:#243556;
+  --dr-ink:#12131a;
+  --dr-muted:#5c6070;
+  --dr-line:#d8dce6;
+  --dr-gold:#c9a227;
+  --dr-gold-soft:#f5e6b8;
+  background:#fff;color:var(--dr-ink);
+  width:100%;max-width:720px;margin:0 auto;
+  border:1px solid var(--dr-line);border-radius:4px;
+  padding:0;overflow:hidden;
+  font-family:Arial,Helvetica,sans-serif;
+  box-shadow:0 22px 55px rgba(12,18,30,.14);
+}
+.dr-doc *{box-sizing:border-box}
+.dr-top{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:22px 24px 16px;border-bottom:1px solid var(--dr-line);
+}
+.dr-top-brand{display:flex;align-items:center;gap:10px}
+.dr-top-brand .mark{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(145deg,#8A90A0,#1A2233);
+  display:grid;place-items:center;color:#FFFFFF;font-weight:900;font-size:16px;
+  box-shadow:0 4px 14px rgba(26,34,51,.35);
+}
+.dr-top-brand .word{
+  font-weight:900;font-size:15px;letter-spacing:.06em;color:var(--dr-ink);
+}
+.dr-top-mid{flex:1;text-align:center;min-width:160px}
+.dr-top-mid h1{
+  margin:0;font-size:22px;font-weight:900;letter-spacing:.04em;
+  color:var(--dr-ink);text-transform:uppercase;
+}
+.dr-top-mid p{
+  margin:4px 0 0;font-size:10px;font-weight:700;letter-spacing:.16em;
+  color:var(--dr-muted);text-transform:uppercase;
+}
+.dr-top-right{text-align:right;font-size:11px;color:var(--dr-muted);line-height:1.55;min-width:140px}
+.dr-top-right strong{display:block;color:var(--dr-ink);font-size:12px;margin-bottom:2px}
+
+.dr-band{
+  background:var(--dr-navy);color:#fff;
+  font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  padding:10px 18px;
+}
+.dr-panel{padding:16px 18px 18px;border-bottom:1px solid var(--dr-line)}
+.dr-panel:last-of-type{border-bottom:0}
+
+.dr-track-grid{
+  display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:start;
+}
+@media(max-width:640px){.dr-track-grid{grid-template-columns:1fr}}
+.dr-track-label{
+  font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dr-muted);
+}
+.dr-track-no{
+  font-size:22px;font-weight:900;letter-spacing:.02em;margin:6px 0 8px;color:var(--dr-ink);
+  word-break:break-all;
+}
+.dr-barcode{display:flex;align-items:flex-end;gap:1.5px;height:42px;margin-top:6px}
+.dr-barcode i{display:block;height:100%;background:var(--dr-ink);border-radius:0}
+.dr-barcode-text{
+  display:block;margin-top:6px;font-family:ui-monospace,Menlo,monospace;
+  font-size:10px;letter-spacing:.2em;color:var(--dr-muted);
+}
+.dr-meta-row{
+  display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:8px 0;border-bottom:1px solid #eef0f4;font-size:13px;
+}
+.dr-meta-row:last-child{border-bottom:0}
+.dr-meta-row span{
+  font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--dr-navy);
+}
+.dr-meta-row b{font-weight:700;text-align:right;color:var(--dr-ink)}
+
+.dr-two{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media(max-width:640px){.dr-two{grid-template-columns:1fr}}
+.dr-two > div{min-width:0}
+.dr-two > div + div{border-left:1px solid var(--dr-line)}
+@media(max-width:640px){.dr-two > div + div{border-left:0;border-top:1px solid var(--dr-line)}}
+.dr-two .dr-band{border-radius:0}
+.dr-two .dr-panel{border-bottom:0}
+
+.dr-field{margin-bottom:11px}
+.dr-field:last-child{margin-bottom:0}
+.dr-field small{
+  display:block;font-size:10px;color:var(--dr-muted);font-weight:600;
+  margin-bottom:2px;letter-spacing:.02em;
+}
+.dr-field b{
+  font-size:13.5px;font-weight:700;line-height:1.4;display:block;
+  word-break:break-word;color:var(--dr-ink);
+}
+
+.dr-pkg-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px}
+@media(max-width:520px){.dr-pkg-grid{grid-template-columns:1fr}}
+
+.dr-care{
+  margin-top:14px;display:inline-flex;align-items:center;gap:8px;
+  background:var(--dr-navy);color:#fff;border-radius:999px;
+  padding:8px 16px;font-size:11px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.dr-pay-row{
+  display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:16px;
+}
+.dr-pay-row .dr-fee{
+  font-size:28px;font-weight:900;color:var(--dr-gold);letter-spacing:-.02em;margin-top:4px;
+}
+.dr-status-chip{
+  display:inline-block;margin-top:6px;
+  border:2px solid var(--dr-gold);color:var(--dr-gold);
+  border-radius:6px;padding:6px 14px;
+  font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+}
+.dr-status-chip.is-done{border-color:#1E9E5A;color:#137a43}
+.dr-note{
+  margin-top:14px;font-size:12px;color:var(--dr-muted);line-height:1.55;
+}
+.dr-note a{color:var(--dr-navy);font-weight:700;word-break:break-all}
+
+.dr-sign{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding-top:4px}
+@media(max-width:520px){.dr-sign{grid-template-columns:1fr}}
+.dr-sign-box{text-align:center}
+.dr-sign-title{
+  font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--dr-navy);
+}
+.dr-sign-line{
+  margin:16px 0 6px;border-bottom:1px solid var(--dr-ink);height:36px;
+  font-family:"Segoe Script","Brush Script MT",cursive;font-size:22px;
+  display:flex;align-items:flex-end;justify-content:center;color:var(--dr-ink);
+}
+.dr-sign-box small{font-size:11px;color:var(--dr-muted)}
+
+.dr-foot{
+  display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  padding:16px 18px 20px;border-top:2px solid var(--dr-navy);
+  font-size:11px;color:var(--dr-muted);line-height:1.5;
+}
+.dr-seal{
+  width:78px;min-width:78px;height:78px;border-radius:50%;
+  border:2px solid var(--dr-navy);color:var(--dr-navy);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;font-size:8.5px;font-weight:800;letter-spacing:.05em;
+  line-height:1.25;text-transform:uppercase;
+}
+
+@media print{
+  .dr-chrome,.topbar,.nav,.spacer-nav,.tp-fixed-header,.tp-fixed-nav{display:none!important}
+  body *{visibility:hidden!important}
+  #dr-stage,#dr-stage *{visibility:visible!important}
+  #dr-stage{position:absolute;left:0;top:0;width:100%;padding:0;margin:0}
+  .dr-doc{box-shadow:none;border:0;max-width:100%}
+}
+
+
+/* Read-only receipt route: keep the page itself quiet and expose only the two requested exports. */
+.tp-readonly-receipt-screen{min-height:100vh;padding:28px 12px 60px;background:var(--bg)}
+.tp-readonly-receipt-head{width:min(920px,100%);margin:0 auto 18px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.tp-readonly-receipt-head .tp-receipt-route-label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.tp-readonly-receipt-head .tp-receipt-route-number{display:block;margin-top:5px;font-size:14px;font-weight:800;color:var(--ink);word-break:break-all}
+.tp-readonly-receipt-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.tp-readonly-receipt-actions button{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:999px;padding:11px 16px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;transition:transform .18s ease,filter .18s ease,box-shadow .18s ease}
+.tp-readonly-receipt-actions button:hover{transform:translateY(-2px);filter:brightness(1.06);box-shadow:0 8px 20px rgba(0,0,0,.16)}
+.tp-readonly-receipt-actions button.secondary{background:transparent;color:var(--accent)}
+@media(max-width:620px){
+  .tp-readonly-receipt-screen{padding:16px 8px 40px}
+  .tp-readonly-receipt-head{align-items:flex-start;flex-direction:column}
+  .tp-readonly-receipt-actions{width:100%;justify-content:stretch}
+  .tp-readonly-receipt-actions button{flex:1;min-width:0}
+}
+@media print{
+  .tp-readonly-receipt-head{display:none!important}
+  .tp-readonly-receipt-screen{padding:0!important;background:#fff!important}
+}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&display=swap" rel="stylesheet">
@@ -3033,6 +3252,21 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
     }
     async function render(message=''){
       try{ if(typeof showPageLoader==='function') showPageLoader('Loading', 350); }catch(_e){}
+      const receiptCode = (typeof tpShipmentReceiptTrackingCode === 'function') ? tpShipmentReceiptTrackingCode() : '';
+      if(receiptCode){
+        let receiptHtml = '';
+        try{
+          receiptHtml = tpReadOnlyShipmentReceipt(receiptCode);
+        }catch(err){
+          console.warn('[TrackPort] shipment receipt render failed', err);
+          receiptHtml = `<div class="tp-readonly-receipt-screen"><div class="dr-doc" style="padding:30px"><strong>Receipt could not be displayed.</strong><p style="margin:8px 0 0;color:#5c6070">${esc(err&&err.message||err)}</p></div></div>`;
+        }
+        $('#app').innerHTML = receiptHtml;
+        renderIcons();
+        try{ if(typeof hidePageLoader==='function') hidePageLoader(); }catch(_e){}
+        window.scrollTo(0,0);
+        return;
+      }
       const code = trackingCode();
       const pMode = (typeof pageMode === 'function') ? pageMode() : 'home';
       if(!code && pMode && pMode !== 'home'){
@@ -3581,6 +3815,297 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initFlowMotion);
   else initFlowMotion();
 })();
+</script>
+
+<style id="tp-readonly-receipt-runtime-style">
+  .tp-readonly-receipt-exporting #dr-doc{box-shadow:none!important}
+</style>
+<script>
+function shipmentReceiptNumber(s){
+  const created = new Date(s.createdAt || Date.now());
+  const stamp = isNaN(created) ? Date.now() : created.getTime();
+  return `RCPT-${String(s.trackingNumber||'').replace(/[^A-Za-z0-9]/g,'').slice(-8).toUpperCase() || String(stamp).slice(-8)}`;
+}
+function shipmentReceiptAddress(party){
+  const p = party || {};
+  return [p.address, [p.city, p.state].filter(Boolean).join(', '), p.country].filter(Boolean).join('<br>') || '—';
+}
+function shipmentReceiptPaymentStatus(s){
+  const delivered = /delivered/i.test(s.status||'');
+  return { label: delivered ? 'Paid' : 'Pending', done: delivered };
+}
+function shipmentReceiptDocHtml(s){
+  try{ if(typeof normalizeShipmentRecordForTrackPort === 'function') if(typeof normalizeShipmentRecord==='function') normalizeShipmentRecord(s); }catch(_e){}
+  const sender = s.sender || {};
+  const recipient = s.recipient || {};
+  const sh = s.shipping || {};
+  const brand = (typeof shipmentReceiptBrand === 'function')
+    ? shipmentReceiptBrand(s)
+    : { name: sh.carrier || s.carrier || 'TrackPort Logistics', service: (sh.carrier || s.carrier || 'TrackPort') + ' ' + (sh.method || s.method || '') };
+  const carrier = brand.name || sh.carrier || s.carrier || 'TrackPort Logistics';
+  const method = sh.method || s.method || 'Express';
+  const delivered = /delivered/i.test(s.status || '');
+  const payLabel = delivered ? 'Paid' : 'Pending';
+  const payDone = delivered;
+  const created = new Date(s.createdAt || s.created || Date.now());
+  const createdStr = isNaN(created.getTime()) ? '—' : (typeof fmtDate === 'function' ? fmtDate(created) : created.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}));
+  const createdFull = isNaN(created.getTime()) ? '—' : (typeof fmtDateTime === 'function' ? fmtDateTime(created) : created.toLocaleString());
+  const currency = s.currency || 'USD';
+  const money = (val) => {
+    if(val === '' || val == null) return '—';
+    const n = Number(val);
+    if(isNaN(n)) return String(val);
+    if(typeof receiptMoney === 'function') return receiptMoney(n, currency);
+    const sym = currency === 'USD' ? '$' : currency === 'GBP' ? '£' : currency === 'EUR' ? '€' : (currency + ' ');
+    return sym + n.toFixed(2);
+  };
+  const fee = money(sh.fee != null ? sh.fee : s.fee);
+  const declared = money(s.value != null ? s.value : (s.declaredValue != null ? s.declaredValue : null));
+  const etaRaw = sh.eta || s.eta || '';
+  let etaStr = 'To be confirmed';
+  if(etaRaw){
+    const ed = new Date(etaRaw);
+    etaStr = isNaN(ed.getTime()) ? String(etaRaw) : (typeof fmtDate === 'function' ? fmtDate(ed) : ed.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}));
+  }
+  const tn = s.trackingNumber || '';
+  const receiptNo = (typeof shipmentReceiptNumber === 'function') ? shipmentReceiptNumber(s) : ('RCPT-' + String(tn).replace(/[^A-Za-z0-9]/g,'').slice(-8).toUpperCase());
+  const pkgType = sh.packageType || s.packageType || 'Box';
+  const weight = sh.weight != null ? sh.weight : s.weight;
+  const dims = sh.dimensions || s.dimensions || '—';
+  const originHub = sender.city || s.origin || sh.initialLocation || '—';
+  const senderName = sender.fullName || sender.name || '—';
+  const recipientName = recipient.fullName || recipient.name || '—';
+  const senderPhone = sender.phone || '—';
+  const recipientPhone = recipient.phone || '—';
+  const senderEmail = sender.email || '';
+  const recipientEmail = recipient.email || '';
+  const fmtAddr = (p, fallbackCity) => {
+    const parts = [p.address, [p.city, p.state].filter(Boolean).join(', '), p.country || p.zip || p.postal].filter(Boolean);
+    if(parts.length) return parts.join('<br>');
+    return esc(fallbackCity || '—');
+  };
+  const senderAddr = fmtAddr(sender, s.origin);
+  const recipientAddr = fmtAddr(recipient, s.destination);
+  const trackUrl = (typeof trackingUrl === 'function') ? trackingUrl(tn) : buildPublicDeepLink('track',tn);
+  const serviceLabel = brand.service || (carrier + (method ? (' ' + method) : ''));
+  const barcode = (typeof shipmentReceiptBarcode === 'function') ? shipmentReceiptBarcode(tn) : '';
+
+  return `<article class="dr-doc" id="dr-doc">
+  <div class="dr-top">
+   <div class="dr-top-brand">${(function(){try{var cb=(typeof resolveCarrierBrand==='function')?resolveCarrierBrand(carrier):null;var isTP=!cb||/trackport/i.test(String(carrier||''));if(isTP)return '<span class="mark">T</span><span class="word">TRACKPORT</span>';if(cb.logo)return '<img src="'+esc(cb.logo)+'" alt="'+esc(cb.name)+'" crossorigin="anonymous" style="height:44px;max-width:150px;object-fit:contain;display:block" onerror="this.outerHTML=\'<span class=&quot;word&quot;>'+esc(String(cb.name).toUpperCase())+'</span>\'">';return '<span class="mark" style="background:'+esc(cb.color)+';color:#fff">'+esc(cb.mark)+'</span><span class="word">'+esc(String(cb.name).toUpperCase())+'</span>';}catch(_e){return '<span class="mark">T</span><span class="word">TRACKPORT</span>';}})()}
+   </div>
+   <div class="dr-top-mid">
+    <h1>Delivery Receipt</h1>
+    <p>Your package, confirmed</p>
+   </div>
+   <div class="dr-top-right">
+    <strong>${esc(carrier || 'TrackPort')}</strong>
+    Receipt no. ${esc(receiptNo)}<br>
+    Issued ${esc(createdStr)}
+   </div>
+  </div>
+
+  <div class="dr-band">Tracking information</div>
+  <div class="dr-panel">
+   <div class="dr-track-grid">
+    <div>
+     <div class="dr-track-label">Tracking no.</div>
+     <div class="dr-track-no">${esc(tn)}</div>
+     ${barcode}
+    </div>
+    <div>
+     <div class="dr-meta-row"><span>Ship date</span><b>${esc(createdStr)}</b></div>
+     <div class="dr-meta-row"><span>Delivery date</span><b>${esc(etaStr)}</b></div>
+     <div class="dr-meta-row"><span>Service type</span><b>${esc(serviceLabel)}</b></div>
+     <div class="dr-meta-row"><span>Current status</span><b>${esc(s.status || 'Shipment Confirmed')}</b></div>
+    </div>
+   </div>
+  </div>
+
+  <div class="dr-two">
+   <div>
+    <div class="dr-band">Sender details</div>
+    <div class="dr-panel">
+     <div class="dr-field"><small>Name</small><b>${esc(senderName)}</b></div>
+     <div class="dr-field"><small>Phone number</small><b>${esc(senderPhone)}</b></div>
+     <div class="dr-field"><small>Address</small><b>${senderAddr}</b></div>
+     ${senderEmail ? `<div class="dr-field"><small>Email</small><b>${esc(senderEmail)}</b></div>` : ''}
+    </div>
+   </div>
+   <div>
+    <div class="dr-band">Recipient details</div>
+    <div class="dr-panel">
+     <div class="dr-field"><small>Name</small><b>${esc(recipientName)}</b></div>
+     <div class="dr-field"><small>Phone number</small><b>${esc(recipientPhone)}</b></div>
+     <div class="dr-field"><small>Address</small><b>${recipientAddr}</b></div>
+     ${recipientEmail ? `<div class="dr-field"><small>Email</small><b>${esc(recipientEmail)}</b></div>` : ''}
+    </div>
+   </div>
+  </div>
+
+  <div class="dr-band">Package information</div>
+  <div class="dr-panel">
+   <div class="dr-pkg-grid">
+    <div class="dr-field"><small>Product</small><b>${esc(s.productName || '—')}</b></div>
+    <div class="dr-field"><small>Category</small><b>${esc(s.category || '—')}</b></div>
+    <div class="dr-field"><small>Package type</small><b>${esc(pkgType)}</b></div>
+    <div class="dr-field"><small>Quantity</small><b>${esc(String(s.quantity != null ? s.quantity : 1))}</b></div>
+    <div class="dr-field"><small>Package weight</small><b>${weight != null && weight !== '' ? esc(String(weight)) + ' kg' : '—'}</b></div>
+    <div class="dr-field"><small>Dimensions (L×W×H cm)</small><b>${esc(dims)}</b></div>
+    <div class="dr-field"><small>Declared value</small><b>${esc(declared)}</b></div>
+    <div class="dr-field"><small>Origin hub</small><b>${esc(originHub)}</b></div>
+   </div>
+   ${s.description ? `<div class="dr-field" style="margin-top:12px"><small>Description</small><b>${esc(s.description)}</b></div>` : ''}
+   <div class="dr-care">▣ HANDLE WITH CARE</div>
+  </div>
+
+  <div class="dr-band">Delivery &amp; payment details</div>
+  <div class="dr-panel">
+   <div class="dr-pay-row">
+    <div>
+     <div class="dr-track-label">Delivery fee</div>
+     <div class="dr-fee">${esc(fee)}</div>
+    </div>
+    <div style="text-align:right">
+     <div class="dr-track-label">Payment status</div>
+     <div class="dr-status-chip ${payDone ? 'is-done' : ''}">${esc(payLabel)}</div>
+    </div>
+   </div>
+   <div class="dr-note">
+    Thank you for shipping with <b>${esc(brand.name || 'TrackPort')}</b> via TrackPort.<br>
+    Follow this shipment any time at:<br>
+    <a href="${esc(trackUrl)}" target="_blank" rel="noopener">${esc(trackUrl)}</a>
+   </div>
+  </div>
+
+  <div class="dr-band">Authorization</div>
+  <div class="dr-panel">
+   <div class="dr-sign">
+    <div class="dr-sign-box">
+     <div class="dr-sign-title">Sender signature</div>
+     <div class="dr-sign-line">${esc(senderName === '—' ? '' : senderName)}</div>
+     <small>Date: ${esc(createdStr)}</small>
+    </div>
+    <div class="dr-sign-box">
+     <div class="dr-sign-title">Logistics management signature</div>
+     <div class="dr-sign-line">${esc(brand.name || 'TrackPort')}</div>
+     <small>Date: ${esc(createdStr)}</small>
+    </div>
+   </div>
+  </div>
+
+  <div class="dr-foot">
+   <div><b>TrackPort</b> shipments are handled under TrackPort terms and conditions.<br>
+   This receipt confirms the shipment record created on ${esc(createdFull)}.</div>
+   <div class="dr-seal">On time<br>delivery<br>guaranteed</div>
+  </div>
+ </article>`;
+}
+
+
+
+/* Hidden read-only shipment receipt route: #/shipment-receipt/TRACKING-NUMBER */
+function tpShipmentReceiptTrackingCode(){
+  try{
+    const raw=String(typeof tpCleanHash==='function'?tpCleanHash():(location.hash||'').replace(/^#\/?/,'')).trim();
+    const parts=raw.split('?')[0].split('/').filter(Boolean);
+    if(parts.length>=2 && /^shipment-receipt$/i.test(parts[0])) return decodeURIComponent(parts[1]).trim().toUpperCase();
+  }catch(_e){}
+  return '';
+}
+function tpReceiptActionIcon(name){
+  try{ return typeof icon==='function' ? icon(name) : ''; }catch(_e){ return ''; }
+}
+async function tpReceiptCanvas(){
+  const card=document.getElementById('dr-doc');
+  if(!card) throw new Error('Receipt document is not available.');
+  if(typeof window.html2canvas!=='function') throw new Error('Receipt image renderer is not available.');
+  document.documentElement.classList.add('tp-readonly-receipt-exporting');
+  try{
+    if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+    const images=[...card.querySelectorAll('img')];
+    await Promise.all(images.map(img=>new Promise(resolve=>{
+      if(img.complete) return resolve();
+      img.addEventListener('load',resolve,{once:true});
+      img.addEventListener('error',resolve,{once:true});
+    })));
+    return await window.html2canvas(card,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#ffffff',logging:false,imageTimeout:15000});
+  }finally{
+    document.documentElement.classList.remove('tp-readonly-receipt-exporting');
+  }
+}
+async function downloadReadOnlyShipmentReceiptImage(){
+  try{
+    const canvas=await tpReceiptCanvas();
+    const a=document.createElement('a');
+    const tn=tpShipmentReceiptTrackingCode()||'shipment';
+    a.href=canvas.toDataURL('image/png');
+    a.download=tn+'_delivery_receipt.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    if(window.showToast) showToast('Shipment receipt image downloaded');
+  }catch(err){
+    console.warn('[TrackPort] receipt image export failed',err);
+    if(window.showToast) showToast('Could not generate the receipt image.',true);
+  }
+}
+async function downloadReadOnlyShipmentReceiptPDF(){
+  try{
+    if(!window.jspdf || !window.jspdf.jsPDF) throw new Error('PDF generator is not available.');
+    const canvas=await tpReceiptCanvas();
+    const jsPDF=window.jspdf.jsPDF;
+    const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4',compress:true});
+    const pageW=pdf.internal.pageSize.getWidth();
+    const pageH=pdf.internal.pageSize.getHeight();
+    const margin=24;
+    const contentW=pageW-(margin*2);
+    const pxPerPage=canvas.width*(pageH-(margin*2))/contentW;
+    let y=0, page=0;
+    while(y<canvas.height){
+      const sliceH=Math.min(pxPerPage,canvas.height-y);
+      const slice=document.createElement('canvas');
+      slice.width=canvas.width;
+      slice.height=Math.ceil(sliceH);
+      const ctx=slice.getContext('2d');
+      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,slice.width,slice.height);
+      ctx.drawImage(canvas,0,y,canvas.width,sliceH,0,0,slice.width,sliceH);
+      const renderedH=slice.height*contentW/canvas.width;
+      if(page>0) pdf.addPage();
+      pdf.addImage(slice.toDataURL('image/jpeg',.95),'JPEG',margin,margin,contentW,renderedH,undefined,'FAST');
+      y+=sliceH; page++;
+    }
+    const tn=tpShipmentReceiptTrackingCode()||'shipment';
+    pdf.save(tn+'_delivery_receipt.pdf');
+    if(window.showToast) showToast('Shipment receipt PDF downloaded');
+  }catch(err){
+    console.warn('[TrackPort] receipt PDF export failed',err);
+    if(window.showToast) showToast('Could not generate the receipt PDF.',true);
+  }
+}
+window.downloadReadOnlyShipmentReceiptImage=downloadReadOnlyShipmentReceiptImage;
+window.downloadReadOnlyShipmentReceiptPDF=downloadReadOnlyShipmentReceiptPDF;
+
+function tpReadOnlyShipmentReceipt(tn){
+  const key=String(tn||'').trim().toUpperCase();
+  let s=null;
+  try{
+    const result=recordFor(key);
+    if(result&&result.record&&result.type==='shipment') s=result.record;
+  }catch(_e){}
+  if(!s) return `<div class="tp-readonly-receipt-screen"><div class="tp-readonly-receipt-head"><div><span class="tp-receipt-route-label">Shipment receipt</span><span class="tp-receipt-route-number">${esc(key)}</span></div><div class="tp-readonly-receipt-actions"><button type="button" onclick="downloadReadOnlyShipmentReceiptImage()">${tpReceiptActionIcon('download')} Download as image</button><button type="button" class="secondary" onclick="downloadReadOnlyShipmentReceiptPDF()">${tpReceiptActionIcon('file-text')} Download as PDF</button></div></div><div id="dr-stage"><div class="dr-doc" style="padding:30px"><strong>Receipt not found.</strong><p style="margin:8px 0 0;color:#5c6070">No shipment record matches this tracking number.</p></div></div></div>`;
+  try{ if(typeof normalizeShipmentRecord==='function') normalizeShipmentRecord(s); }catch(_e){}
+  const receiptNo=shipmentReceiptNumber(s);
+  return `<div class="tp-readonly-receipt-screen">
+    <div class="tp-readonly-receipt-head">
+      <div><span class="tp-receipt-route-label">Shipment receipt</span><span class="tp-receipt-route-number">${esc(s.trackingNumber||key)}</span><span style="display:block;margin-top:3px;font-size:11px;color:var(--muted)">Receipt ${esc(receiptNo)}</span></div>
+      <div class="tp-readonly-receipt-actions">
+        <button type="button" onclick="downloadReadOnlyShipmentReceiptImage()">${tpReceiptActionIcon('download')} Download as image</button>
+        <button type="button" class="secondary" onclick="downloadReadOnlyShipmentReceiptPDF()">${tpReceiptActionIcon('file-text')} Download as PDF</button>
+      </div>
+    </div>
+    <div id="dr-stage">${shipmentReceiptDocHtml(s)}</div>
+  </div>`;
+}
+window.tpReadOnlyShipmentReceipt=tpReadOnlyShipmentReceipt;
 </script>
 </body>
 </html>
