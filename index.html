@@ -1976,6 +1976,7 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
     };
 
     let shipments = {}, flights = {}, listeners = [], db = null, recordCache = {};
+    let publicRecordUnsubscribe = null, publicRecordWatchKey = '';
     /* Status flows aligned with the premium creator app */
     const STATUS_FLOW = ['Order Created','Shipment Confirmed','Picked Up','In Transit','Arrived at Facility','Out for Delivery','Delivered'];
     const ALL_STATUSES = [...STATUS_FLOW, 'Delivery Exception'];
@@ -2091,6 +2092,41 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
       }
       return { type: 'shipment', record: normalizeShipmentRecord(record) };
     }
+    function parsePublicCloudRecord(data, requestedNumber){
+      if(!data || typeof data !== 'object') return null;
+      let record = null;
+      if(typeof data.data === 'string'){
+        try{ record = JSON.parse(data.data); }catch(_e){ record = null; }
+      }else if(data.data && typeof data.data === 'object'){
+        record = data.data;
+      }
+      if(!record || typeof record !== 'object'){
+        const type = String(data.type || '').toLowerCase();
+        const details = type === 'flight' ? (data.flight || {}) : (data.shipment || {});
+        const parties = data.parties || {};
+        record = {
+          ...details,
+          trackingNumber: data.trackingNumber || data.docKey || requestedNumber || '',
+          type,
+          status: data.status || details.status || '',
+          events: Array.isArray(data.events) ? data.events : (details.events || []),
+          sender: parties.sender || details.sender || {},
+          recipient: parties.recipient || details.recipient || {},
+          passengerDetails: parties.passenger || details.passengerDetails || {},
+          createdAt: data.createdAtISO || data.createdAt || details.createdAt || '',
+          updatedAt: data.updatedAtISO || data.updatedAt || details.updatedAt || '',
+          liveLocation: data.live || details.liveLocation || null,
+          owner: data.owner || details.owner || {}
+        };
+      }else{
+        record = {
+          ...record,
+          trackingNumber: record.trackingNumber || data.trackingNumber || data.docKey || requestedNumber || '',
+          type: record.type || data.type || ''
+        };
+      }
+      return parseCloudRecord({type:data.type || record.type || '', value:record});
+    }
     function candidateDocIds(code){
       const raw = String(code || '').trim();
       if(!raw) return [];
@@ -2126,49 +2162,120 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
       }
       return db;
     }
+    function watchPublicRecord(number, docId){
+      const key = String(number || '').trim().toUpperCase();
+      if(!db || !key || !docId || (publicRecordWatchKey === key && publicRecordUnsubscribe)) return;
+      if(publicRecordUnsubscribe){ try{ publicRecordUnsubscribe(); }catch(_e){} }
+      publicRecordUnsubscribe = null;
+      publicRecordWatchKey = key;
+      try{
+        publicRecordUnsubscribe = db.collection('trackportPublic').doc(docId).onSnapshot(snapshot=>{
+          if(!snapshot.exists) return;
+          const parsed = parsePublicCloudRecord(snapshot.data(), number);
+          if(!parsed || !parsed.record) return;
+          recordCache[key] = parsed;
+          if(parsed.type === 'flight') flights[key] = parsed.record;
+          else shipments[key] = parsed.record;
+          if(String(trackingCode() || '').trim().toUpperCase() === key){
+            clearTimeout(window.tpPublicTrackRenderTimer);
+            window.tpPublicTrackRenderTimer = setTimeout(()=>render(), 80);
+          }
+        }, error=>console.warn('[TrackPort] public tracking listener failed', error));
+      }catch(error){
+        console.warn('[TrackPort] could not watch public tracking record', error);
+      }
+    }
     async function fetchRecordByNumber(code){
       const raw = String(code || '').trim();
       const key = raw.toUpperCase();
       if(!key) return null;
-      if(recordCache[key]) return recordCache[key];
-      const local = lookupInLocalMaps(key) || lookupInLocalMaps(raw);
-      if(local){ recordCache[key] = local; return local; }
+      const local = recordCache[key] || lookupInLocalMaps(key) || lookupInLocalMaps(raw);
       const readyDb = await ensureDb(5000);
-      if(!readyDb){ console.warn('[TrackPort] Firestore not ready'); return null; }
+      if(!readyDb){
+        if(local) return local;
+        console.warn('[TrackPort] Firestore not ready');
+        return null;
+      }
+      let lookupError = null;
+      const saveFoundRecord = (parsed, publicDocId)=>{
+        if(!parsed || !parsed.record) return null;
+        recordCache[key] = parsed;
+        if(parsed.type === 'flight') flights[key] = parsed.record;
+        else shipments[key] = parsed.record;
+        if(publicDocId) watchPublicRecord(raw, publicDocId);
+        return parsed;
+      };
+
+      /* New main-app records are mirrored into trackportPublic. Search that
+         read-only collection first, including case-insensitive and alias
+         matches, then fall back to the older nbatoolsState document format. */
+      const publicRecords = readyDb.collection('trackportPublic');
+      const publicIds = candidateDocIds(raw).map(id=>id.slice(0,140));
+      for(const id of publicIds){
+        try{
+          const snap = await publicRecords.doc(id).get();
+          if(snap.exists){
+            const parsed = saveFoundRecord(parsePublicCloudRecord(snap.data(), raw), id);
+            if(parsed) return parsed;
+          }
+        }catch(err){
+          lookupError = err;
+          console.warn('[TrackPort] public tracking lookup failed', id, err);
+        }
+      }
+      const publicQueries = [
+        ()=>publicRecords.where('trackingNumberLower','==',raw.toLowerCase()).limit(3).get(),
+        ()=>publicRecords.where('searchKeys','array-contains',raw).limit(3).get()
+      ];
+      for(const runQuery of publicQueries){
+        try{
+          const qs = await runQuery();
+          for(const doc of qs.docs){
+            const parsed = saveFoundRecord(parsePublicCloudRecord(doc.data(), raw), doc.id);
+            if(parsed) return parsed;
+          }
+        }catch(err){
+          lookupError = err;
+          console.warn('[TrackPort] public tracking query failed', err);
+        }
+      }
+
       for(const id of candidateDocIds(raw)){
         try{
           const snap = await readyDb.collection('nbatoolsState').doc('trackport-record-' + id).get();
           if(snap.exists){
-            const parsed = parseCloudRecord(snap.data());
-            if(parsed && parsed.record){
-              recordCache[key] = parsed;
-              if(parsed.type === 'flight') flights[key] = parsed.record;
-              else shipments[key] = parsed.record;
-              return parsed;
-            }
+            const parsed = saveFoundRecord(parseCloudRecord(snap.data()));
+            if(parsed) return parsed;
           }
-        }catch(err){ console.warn('[TrackPort] per-record lookup failed', id, err); }
-      }
-      try{
-        for(const val of [raw, key]){
-          try{
-            const qs = await readyDb.collection('nbatoolsState').where('trackingNumber','==',val).limit(3).get();
-            if(!qs.empty){
-              for(const doc of qs.docs){
-                const parsed = parseCloudRecord(doc.data());
-                if(parsed && parsed.record){
-                  recordCache[key] = parsed;
-                  if(parsed.type === 'flight') flights[key] = parsed.record;
-                  else shipments[key] = parsed.record;
-                  return parsed;
-                }
-              }
-            }
-          }catch(qErr){ console.warn('[TrackPort] query failed', qErr); }
+        }catch(err){
+          lookupError = err;
+          console.warn('[TrackPort] per-record lookup failed', id, err);
         }
-      }catch(err){ console.warn('[TrackPort] trackingNumber query failed', err); }
-      const local2 = lookupInLocalMaps(key);
-      if(local2){ recordCache[key] = local2; return local2; }
+      }
+      for(const val of [raw, key]){
+        try{
+          const qs = await readyDb.collection('nbatoolsState').where('trackingNumber','==',val).limit(3).get();
+          for(const doc of qs.docs){
+            const parsed = saveFoundRecord(parseCloudRecord(doc.data()));
+            if(parsed) return parsed;
+          }
+        }catch(err){
+          lookupError = err;
+          console.warn('[TrackPort] legacy tracking query failed', err);
+        }
+      }
+      if(lookupError){
+        const code = String(lookupError.code || '').toLowerCase();
+        if(code.includes('permission-denied') || code.includes('unauthenticated') ||
+           code.includes('unavailable') || code.includes('network') ||
+           code.includes('deadline-exceeded')){
+          throw lookupError;
+        }
+      }
+      if(local){
+        recordCache[key] = local;
+        return local;
+      }
       return null;
     }
     
@@ -3245,7 +3352,7 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
       if(recordCache[code]) return recordCache[code];
       if(typeof lookupInLocalMaps === 'function'){
         const found = lookupInLocalMaps(key) || lookupInLocalMaps(code);
-        if(found){ recordCache[key] = found; return found; }
+        if(found) return found;
       }
       if(key.startsWith('FLT-') && flights[key]) return {record:normalizeFlightRecord(flights[key]),type:'flight'};
       if(shipments[key]) return {record:normalizeShipmentRecord(shipments[key]),type:'shipment'};
@@ -3298,8 +3405,8 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
       }
       let result = recordFor(code);
       let fetchError = null;
-      if(code && !result.record){
-        for(let attempt = 0; attempt < 3 && !result.record; attempt++){
+      if(code && (!result.record || !recordCache[String(code).trim().toUpperCase()])){
+        for(let attempt = 0; attempt < 3 && (!result.record || !recordCache[String(code).trim().toUpperCase()]); attempt++){
           try{
             if(typeof ensureDb === 'function') await ensureDb(4000);
             result = (await fetchRecordByNumber(code)) || {record:null,type:null};
@@ -3331,6 +3438,14 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
         html = mode === 'pickup'
           ? pickupSearchPage('Connecting to TrackPort… try again in a moment.')
           : errorPage('Tracking service is starting up. Please wait a second and search again.');
+      } else if(fetchError && String(fetchError.code || '').toLowerCase().includes('permission-denied')){
+        html = mode === 'pickup'
+          ? pickupSearchPage('Firestore blocked this tracking lookup. Allow public reads for trackportPublic and nbatoolsState in the Firestore rules.')
+          : errorPage('Firestore blocked this tracking lookup. Your rules should allow public reads from trackportPublic and nbatoolsState.');
+      } else if(fetchError){
+        html = mode === 'pickup'
+          ? pickupSearchPage('TrackPort could not reach Firestore. Check the connection and try again.')
+          : errorPage('TrackPort could not reach Firestore. Check the connection and try the tracking number again.');
       } else {
         html = mode === 'pickup'
           ? pickupSearchPage('No package found for '+code+'. Check the tracking number or create the shipment while signed in so it syncs to the cloud.')
