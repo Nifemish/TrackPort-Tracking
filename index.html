@@ -2018,6 +2018,73 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
       if(!db) return null;
       return db.collection('nbatoolsState').doc('trackport-record-' + sanitizeDocId(number));
     }
+    /* Public read model (auth-free) — matches main app trackportPublic mirror */
+    const TP_PUBLIC_COLLECTION = 'trackportPublic';
+    function publicDocRef(number){
+      if(!db) return null;
+      return db.collection(TP_PUBLIC_COLLECTION).doc(sanitizeDocId(number));
+    }
+    function parsePublicDoc(doc){
+      if(!doc || typeof doc !== 'object') return null;
+      let record = null;
+      if(typeof doc.data === 'string' && doc.data){
+        try{ record = JSON.parse(doc.data); }catch(_e){ record = null; }
+      } else if(doc.data && typeof doc.data === 'object'){
+        record = doc.data;
+      }
+      const typeRaw = String(doc.type || (record && record.type) || 'shipment').toLowerCase();
+      const type = typeRaw === 'flight' ? 'flight' : (typeRaw === 'receipt' ? 'receipt' : 'shipment');
+      const block = (type === 'flight' ? doc.flight : type === 'receipt' ? doc.receipt : doc.shipment) || {};
+      const parties = doc.parties || {};
+      const media = doc.media || {};
+      const branding = doc.branding || {};
+      const rec = Object.assign({}, record || {}, block || {});
+      rec.trackingNumber = rec.trackingNumber || doc.trackingNumber || '';
+      rec.status = rec.status || doc.status || '';
+      rec.type = type;
+      if(parties.sender) rec.sender = Object.assign({}, rec.sender || {}, {
+        name: parties.sender.name || (rec.sender && rec.sender.name) || '',
+        fullName: parties.sender.name || (rec.sender && (rec.sender.fullName || rec.sender.name)) || '',
+        email: parties.sender.email || (rec.sender && rec.sender.email) || '',
+        phone: parties.sender.phone || (rec.sender && rec.sender.phone) || '',
+        city: parties.sender.city || (rec.sender && rec.sender.city) || '',
+        address: parties.sender.address || (rec.sender && rec.sender.address) || '',
+        country: (rec.sender && rec.sender.country) || ''
+      });
+      if(parties.recipient) rec.recipient = Object.assign({}, rec.recipient || {}, {
+        name: parties.recipient.name || (rec.recipient && rec.recipient.name) || '',
+        fullName: parties.recipient.name || (rec.recipient && (rec.recipient.fullName || rec.recipient.name)) || '',
+        email: parties.recipient.email || (rec.recipient && rec.recipient.email) || '',
+        phone: parties.recipient.phone || (rec.recipient && rec.recipient.phone) || '',
+        city: parties.recipient.city || (rec.recipient && rec.recipient.city) || '',
+        address: parties.recipient.address || (rec.recipient && rec.recipient.address) || '',
+        country: (rec.recipient && rec.recipient.country) || ''
+      });
+      if(parties.passenger){
+        rec.passenger = rec.passenger || parties.passenger.name || '';
+        rec.passengerDetails = Object.assign({}, rec.passengerDetails || {}, parties.passenger);
+      }
+      if(Array.isArray(doc.events) && doc.events.length) rec.events = doc.events;
+      if(doc.live){
+        rec.liveLocation = doc.live;
+        if(doc.live.latitude != null) rec.latitude = doc.live.latitude;
+        if(doc.live.longitude != null) rec.longitude = doc.live.longitude;
+      }
+      if(media.productImage || media.imageUrl){
+        rec.productImage = media.productImage || media.imageUrl;
+        rec.imageUrl = media.imageUrl || media.productImage;
+      }
+      if(media.receiptImage) rec.receiptImage = media.receiptImage;
+      if(media.signature) rec.signature = media.signature;
+      if(media.ticketImage) rec.ticketImage = media.ticketImage;
+      if(branding.carrier && !rec.carrier) rec.carrier = branding.carrier;
+      if(branding.carrierLogo) rec.carrierLogo = branding.carrierLogo;
+      if(branding.airline && !rec.airline) rec.airline = branding.airline;
+      if(branding.airlineLogo) rec.airlineLogo = branding.airlineLogo;
+      if(doc.createdAtISO && !rec.created && !rec.createdAt) rec.createdAt = doc.createdAtISO;
+      if(type === 'flight') return { type: 'flight', record: normalizeFlightRecord(rec) };
+      return { type: 'shipment', record: normalizeShipmentRecord(rec) };
+    }
     /** Bridge premium (flat) shipment schema → tracking UI fields */
     function normalizeShipmentRecord(s){
       if(!s || typeof s !== 'object') return s;
@@ -2135,6 +2202,56 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
       if(local){ recordCache[key] = local; return local; }
       const readyDb = await ensureDb(5000);
       if(!readyDb){ console.warn('[TrackPort] Firestore not ready'); return null; }
+
+      /* 1) Public collection — works without auth (required after rules change) */
+      for(const id of candidateDocIds(raw)){
+        try{
+          const snap = await readyDb.collection(TP_PUBLIC_COLLECTION).doc(id).get();
+          if(snap.exists){
+            const parsed = parsePublicDoc(snap.data());
+            if(parsed && parsed.record){
+              recordCache[key] = parsed;
+              if(parsed.type === 'flight') flights[key] = parsed.record;
+              else shipments[key] = parsed.record;
+              return parsed;
+            }
+          }
+        }catch(err){ console.warn('[TrackPort] public lookup failed', id, err); }
+      }
+      try{
+        for(const val of [raw, key, raw.toLowerCase()]){
+          try{
+            const qs = await readyDb.collection(TP_PUBLIC_COLLECTION).where('trackingNumber','==',val).limit(3).get();
+            if(!qs.empty){
+              for(const doc of qs.docs){
+                const parsed = parsePublicDoc(doc.data());
+                if(parsed && parsed.record){
+                  recordCache[key] = parsed;
+                  if(parsed.type === 'flight') flights[key] = parsed.record;
+                  else shipments[key] = parsed.record;
+                  return parsed;
+                }
+              }
+            }
+          }catch(qErr){ console.warn('[TrackPort] public query failed', qErr); }
+        }
+        try{
+          const qs2 = await readyDb.collection(TP_PUBLIC_COLLECTION).where('trackingNumberLower','==',key.toLowerCase()).limit(3).get();
+          if(!qs2.empty){
+            for(const doc of qs2.docs){
+              const parsed = parsePublicDoc(doc.data());
+              if(parsed && parsed.record){
+                recordCache[key] = parsed;
+                if(parsed.type === 'flight') flights[key] = parsed.record;
+                else shipments[key] = parsed.record;
+                return parsed;
+              }
+            }
+          }
+        }catch(qErr2){ console.warn('[TrackPort] public lower query failed', qErr2); }
+      }catch(err){ console.warn('[TrackPort] public trackingNumber query failed', err); }
+
+      /* 2) Private fallback (only works if rules still allow unauth read) */
       for(const id of candidateDocIds(raw)){
         try{
           const snap = await readyDb.collection('nbatoolsState').doc('trackport-record-' + id).get();
@@ -2170,6 +2287,34 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
       const local2 = lookupInLocalMaps(key);
       if(local2){ recordCache[key] = local2; return local2; }
       return null;
+    }
+
+    /* Live updates for the currently viewed public tracking number */
+    let tpLivePublicUnsub = null;
+    let tpLivePublicKey = '';
+    function subscribePublicRecord(code){
+      const key = String(code || '').trim().toUpperCase();
+      if(!db || !key) return;
+      if(tpLivePublicKey === key && tpLivePublicUnsub) return;
+      if(tpLivePublicUnsub){ try{ tpLivePublicUnsub(); }catch(_e){} tpLivePublicUnsub = null; }
+      tpLivePublicKey = key;
+      const ids = candidateDocIds(key);
+      const id = ids[0] || sanitizeDocId(key);
+      try{
+        tpLivePublicUnsub = db.collection(TP_PUBLIC_COLLECTION).doc(id).onSnapshot(function(snap){
+          if(!snap.exists) return;
+          const parsed = parsePublicDoc(snap.data());
+          if(!parsed || !parsed.record) return;
+          recordCache[key] = parsed;
+          if(parsed.type === 'flight') flights[key] = parsed.record;
+          else shipments[key] = parsed.record;
+          try{
+            const current = (typeof trackingCode === 'function' ? trackingCode() : '') ||
+              (typeof tpShipmentReceiptTrackingCode === 'function' ? tpShipmentReceiptTrackingCode() : '');
+            if(String(current || '').toUpperCase() === key) render();
+          }catch(_e){}
+        }, function(err){ console.warn('[TrackPort] public live listener', err); });
+      }catch(err){ console.warn('[TrackPort] public subscribe failed', err); }
     }
     function routeText(value){ return String(value || '').trim(); }
     
@@ -3256,6 +3401,18 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
       if(receiptCode){
         let receiptHtml = '';
         try{
+          let cached = null;
+          try{ cached = recordFor(receiptCode); }catch(_e){}
+          if(!cached || !cached.record){
+            try{
+              if(typeof ensureDb === 'function') await ensureDb(5000);
+              const fetched = await fetchRecordByNumber(receiptCode);
+              if(fetched && fetched.record) cached = fetched;
+            }catch(fetchErr){ console.warn('[TrackPort] receipt fetch failed', fetchErr); }
+          }
+          if(cached && cached.record){
+            try{ subscribePublicRecord(receiptCode); }catch(_e){}
+          }
           receiptHtml = tpReadOnlyShipmentReceipt(receiptCode);
         }catch(err){
           console.warn('[TrackPort] shipment receipt render failed', err);
@@ -3304,6 +3461,9 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
           }
           if(!result.record) await new Promise(r=>setTimeout(r, 450));
         }
+      }
+      if(code && result && result.record){
+        try{ subscribePublicRecord(code); }catch(_e){}
       }
       const mode = (typeof routeMode === 'function') ? routeMode() : 'track';
       let html;
@@ -3604,13 +3764,24 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
         console.error('[TrackPort] Firestore init failed', error);
         return;
       }
-      const attach = (key, setter) => db.collection('nbatoolsState').doc(key).onSnapshot(snapshot=>{
-        try{ setter(snapshot.exists ? normalizeRecords(snapshot.data()?.value) : {}); }
-        catch(e){ console.warn(e); setter({}); }
-        render();
-      }, error=>{ console.warn(`Could not read ${key}`,error); });
-      listeners.push(attach('shared:nbatools-shipments', value=>shipments=value));
-      listeners.push(attach('shared:nbatools-flights', value=>flights=value));
+      /* Legacy shared maps are private (auth-only). Public tracking uses
+         trackportPublic per-doc lookups in fetchRecordByNumber instead. */
+      const attach = (key, setter) => {
+        try{
+          return db.collection('nbatoolsState').doc(key).onSnapshot(snapshot=>{
+            try{ setter(snapshot.exists ? normalizeRecords(snapshot.data()?.value) : {}); }
+            catch(e){ console.warn(e); setter({}); }
+            render();
+          }, error=>{ console.warn(`Could not read ${key} (expected if rules are auth-only)`,error); });
+        }catch(err){
+          console.warn(`Could not attach ${key}`, err);
+          return function(){};
+        }
+      };
+      try{
+        listeners.push(attach('shared:nbatools-shipments', value=>shipments=value));
+        listeners.push(attach('shared:nbatools-flights', value=>flights=value));
+      }catch(_e){}
       setTimeout(()=>{ try{ render(); }catch(_e){} }, 250);
     }
     let tpLastRouteKey = null;
