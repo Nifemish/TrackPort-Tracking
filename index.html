@@ -2186,6 +2186,17 @@ html{scroll-behavior:smooth}body{margin:0;background:var(--surface)!important;co
       }
     }
     async function fetchRecordByNumber(code){
+      /* A shipment may have just completed its cloud sync on another page.
+         Give Firestore a short window to expose the public record before
+         declaring that the tracking number does not exist. */
+      for(let attempt=0;attempt<3;attempt++){
+        const result=await fetchRecordByNumberOnce(code);
+        if(result||attempt===2)return result;
+        await new Promise(resolve=>setTimeout(resolve,650*(attempt+1)));
+      }
+      return null;
+    }
+    async function fetchRecordByNumberOnce(code){
       const raw = String(code || '').trim();
       const key = raw.toUpperCase();
       if(!key) return null;
